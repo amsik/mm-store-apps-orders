@@ -2,6 +2,7 @@ import { NetworkStatus } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { useState } from 'react';
 import type { OrderState } from '../gql/graphql';
+import { orderHref } from '../router';
 import { ORDERS_PAGE_SIZE, ORDERS_QUERY } from './documents';
 import { formatCents, formatDateTime, formatState, orderTotalCents } from './format';
 
@@ -11,6 +12,8 @@ export function OrdersList() {
   const [state, setState] = useState<OrderState | ''>('');
   const { data, error, loading, networkStatus, fetchMore, refetch } = useQuery(ORDERS_QUERY, {
     variables: { first: ORDERS_PAGE_SIZE, ...(state && { filter: { state } }) },
+    // Show the cached list at once, but pick up transitions made on the details screen.
+    fetchPolicy: 'cache-and-network',
     notifyOnNetworkStatusChange: true,
   });
   const orders = data?.orders;
@@ -65,7 +68,9 @@ export function OrdersList() {
           <tbody>
             {orders.nodes.map((order) => (
               <tr key={order.id}>
-                <td>{order.customer.name}</td>
+                <td>
+                  <a href={orderHref(order.id)}>{order.customer.name}</a>
+                </td>
                 <td>
                   <span className={`badge badge-${order.state.toLowerCase()}`}>
                     {formatState(order.state)}
