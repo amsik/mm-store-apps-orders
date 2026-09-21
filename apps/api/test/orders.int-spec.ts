@@ -2,7 +2,7 @@ import type { Server } from 'node:http';
 import type { INestApplication } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp } from './setup/create-test-app.js';
 import { testDatabaseUrl } from './setup/database.js';
 
@@ -36,6 +36,28 @@ const LIST_ORDERS = `
   }
 `;
 
+const TRANSITION_ORDER = `
+  mutation TransitionOrder($input: TransitionOrderInput!) {
+    transitionOrder(input: $input) {
+      id
+      state
+      assignedEmployee { id name }
+      history { from to at employeeId }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+interface TransitionedOrder {
+  id: string;
+  state: string;
+  assignedEmployee: { id: string; name: string } | null;
+  history: { from: string; to: string; at: string; employeeId: string | null }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface OrderConnection {
   nodes: { id: string; state: string }[];
   pageInfo: { endCursor: string | null; hasNextPage: boolean };
@@ -53,7 +75,12 @@ interface GraphQLResponse {
   data?: Record<string, unknown> | null;
   errors?: {
     message: string;
-    extensions: { code: string; fields?: { path: string; messages: string[] }[] };
+    extensions: {
+      code: string;
+      fields?: { path: string; messages: string[] }[];
+      from?: string;
+      to?: string;
+    };
   }[];
 }
 
@@ -223,6 +250,153 @@ describe('orders (integration)', () => {
         code: 'BAD_USER_INPUT',
         fields: [{ path, messages: [expect.any(String)] }],
       });
+    });
+  });
+
+  describe('transitionOrder', () => {
+    const ALICE = { id: '66f0e0000000000000000001', name: 'Alice Schmidt' };
+    const BRUNO = { id: '66f0e0000000000000000002', name: 'Bruno Weber' };
+    const UNKNOWN_ID = '665f1c2b8a1e4d0012345678';
+
+    let orderId: string;
+
+    beforeEach(async () => {
+      await prisma.employee.createMany({ data: [ALICE, BRUNO] });
+      orderId = ((await gql(CREATE_ORDER, { input: VALID_INPUT })).data?.createOrder as { id: string }).id;
+    });
+
+    function transition(input: object): Promise<GraphQLResponse> {
+      return gql(TRANSITION_ORDER, { input: { orderId, ...input } });
+    }
+
+    async function transitioned(input: object): Promise<TransitionedOrder> {
+      const res = await transition(input);
+      expect(res.errors).toBeUndefined();
+      return res.data?.transitionOrder as TransitionedOrder;
+    }
+
+    /** The stored order, to prove a rejected transition changed nothing. */
+    function stored() {
+      return prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+    }
+
+    it('moves an order OPEN → IN_PROGRESS → COMPLETE, keeping the employee and recording history', async () => {
+      const created = await stored();
+
+      const started = await transitioned({ targetState: 'IN_PROGRESS', employeeId: ALICE.id });
+      expect(started).toMatchObject({ id: orderId, state: 'IN_PROGRESS', assignedEmployee: ALICE });
+      expect(new Date(started.updatedAt) > created.updatedAt).toBe(true);
+
+      const completed = await transitioned({ targetState: 'COMPLETE' });
+      expect(completed).toMatchObject({ state: 'COMPLETE', assignedEmployee: ALICE });
+      expect(completed.updatedAt >= started.updatedAt).toBe(true);
+      expect(completed.history).toEqual([
+        { from: 'OPEN', to: 'IN_PROGRESS', at: started.updatedAt, employeeId: ALICE.id },
+        { from: 'IN_PROGRESS', to: 'COMPLETE', at: completed.updatedAt, employeeId: ALICE.id },
+      ]);
+
+      expect(await gql(GET_ORDER, { id: orderId })).toMatchObject({ data: { order: { state: 'COMPLETE' } } });
+    });
+
+    it('returns an OPEN order with no employee and an empty history', async () => {
+      const res = await gql(
+        `query ($id: ID!) { order(id: $id) { assignedEmployee { id } history { to } } }`,
+        {
+          id: orderId,
+        },
+      );
+
+      expect(res).toEqual({ data: { order: { assignedEmployee: null, history: [] } } });
+    });
+
+    describe('rejections change nothing', () => {
+      it.each([
+        ['a skip (OPEN → COMPLETE)', { targetState: 'COMPLETE' }, 'INVALID_TRANSITION'],
+        ['a repeat (OPEN → OPEN)', { targetState: 'OPEN' }, 'INVALID_TRANSITION'],
+        ['IN_PROGRESS without an employee', { targetState: 'IN_PROGRESS' }, 'EMPLOYEE_REQUIRED'],
+        [
+          'IN_PROGRESS with an unknown employee',
+          { targetState: 'IN_PROGRESS', employeeId: UNKNOWN_ID },
+          'NOT_FOUND',
+        ],
+      ])('rejects %s with %s', async (_case, input, code) => {
+        const before = await stored();
+
+        const res = await transition(input);
+
+        expect(res.data).toBeNull();
+        expect(res.errors).toHaveLength(1);
+        expect(res.errors?.[0]?.extensions.code).toBe(code);
+        expect(await stored()).toEqual(before);
+      });
+
+      it('rejects a revert (IN_PROGRESS → OPEN) with INVALID_TRANSITION, naming both states', async () => {
+        await transitioned({ targetState: 'IN_PROGRESS', employeeId: ALICE.id });
+        const before = await stored();
+
+        const res = await transition({ targetState: 'OPEN' });
+
+        expect(res.errors?.[0]).toMatchObject({
+          message: 'Cannot move an order from IN_PROGRESS to OPEN; the next state must be COMPLETE',
+          extensions: { code: 'INVALID_TRANSITION', from: 'IN_PROGRESS', to: 'OPEN' },
+        });
+        expect(await stored()).toEqual(before);
+      });
+
+      it('rejects any move out of COMPLETE with INVALID_TRANSITION', async () => {
+        await transitioned({ targetState: 'IN_PROGRESS', employeeId: ALICE.id });
+        await transitioned({ targetState: 'COMPLETE' });
+        const before = await stored();
+
+        const res = await transition({ targetState: 'IN_PROGRESS', employeeId: BRUNO.id });
+
+        expect(res.errors?.[0]?.extensions.code).toBe('INVALID_TRANSITION');
+        expect(await stored()).toEqual(before);
+      });
+
+      it('rejects an unknown order with NOT_FOUND', async () => {
+        const res = await gql(TRANSITION_ORDER, {
+          input: { orderId: UNKNOWN_ID, targetState: 'IN_PROGRESS', employeeId: ALICE.id },
+        });
+
+        expect(res.errors?.[0]).toMatchObject({
+          message: `Order ${UNKNOWN_ID} not found`,
+          extensions: { code: 'NOT_FOUND' },
+        });
+      });
+
+      it.each([
+        ['orderId', { orderId: 'nope', targetState: 'COMPLETE' }],
+        ['employeeId', { targetState: 'IN_PROGRESS', employeeId: 'nope' }],
+      ])('rejects a malformed %s with BAD_USER_INPUT', async (path, input) => {
+        const before = await stored();
+
+        const res = await transition(input);
+
+        expect(res.errors?.[0]?.extensions).toMatchObject({ code: 'BAD_USER_INPUT', fields: [{ path }] });
+        expect(await stored()).toEqual(before);
+      });
+    });
+
+    it('lets exactly one of two concurrent starts win', async () => {
+      const results = await Promise.all([
+        transition({ targetState: 'IN_PROGRESS', employeeId: ALICE.id }),
+        transition({ targetState: 'IN_PROGRESS', employeeId: BRUNO.id }),
+      ]);
+
+      const winners = results.filter((res) => !res.errors);
+      const losers = results.filter((res) => res.errors);
+      expect(winners).toHaveLength(1);
+      expect(losers).toHaveLength(1);
+      // The loser either read the order before the winner wrote it (the write then matches nothing) or after.
+      expect(['CONCURRENT_MODIFICATION', 'INVALID_TRANSITION']).toContain(
+        losers[0]?.errors?.[0]?.extensions.code,
+      );
+
+      const order = await stored();
+      const winner = winners[0]?.data?.transitionOrder as TransitionedOrder;
+      expect(order.history).toHaveLength(1);
+      expect(order.assignedEmployee).toEqual(winner.assignedEmployee);
     });
   });
 });

@@ -62,11 +62,23 @@ input LineItemInput {
 type Mutation {
   """Creates an order in state OPEN, with no employee assigned."""
   createOrder(input: CreateOrderInput!): Order!
+
+  """
+  Moves an order to the next state. Skips, reverts and repeats fail with INVALID_TRANSITION, starting without an employee with EMPLOYEE_REQUIRED, and losing a race with another request with CONCURRENT_MODIFICATION.
+  """
+  transitionOrder(input: TransitionOrderInput!): Order!
 }
 
 type Order {
+  """
+  Assigned when the order is started and kept once it is complete; null while OPEN.
+  """
+  assignedEmployee: Employee
   createdAt: DateTime!
   customer: Customer!
+
+  """Every transition so far, oldest first."""
+  history: [OrderStateChange!]!
   id: ID!
   lineItems: [LineItem!]!
   state: OrderState!
@@ -89,6 +101,16 @@ enum OrderState {
   COMPLETE
   IN_PROGRESS
   OPEN
+}
+
+"""One step of an order through its lifecycle."""
+type OrderStateChange {
+  at: DateTime!
+
+  """The employee working on the order at that moment."""
+  employeeId: ID
+  from: OrderState!
+  to: OrderState!
 }
 
 type PageInfo {
@@ -118,4 +140,15 @@ type Query {
     """Page size, 1 to 100."""
     first: Int! = 20
   ): OrderConnection!
+}
+
+input TransitionOrderInput {
+  """
+  Required to move to IN_PROGRESS; ignored otherwise (the employee assigned on start stays).
+  """
+  employeeId: ID
+  orderId: ID!
+
+  """Must be the next state: OPEN → IN_PROGRESS → COMPLETE."""
+  targetState: OrderState!
 }

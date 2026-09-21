@@ -1,7 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
-import { CreateOrderInput, OrderArgs, OrdersArgs } from './order.inputs.js';
+import { CreateOrderInput, OrderArgs, OrdersArgs, TransitionOrderInput } from './order.inputs.js';
 
 const VALID = {
   customer: { name: 'Ada Lovelace', email: 'ada@example.com' },
@@ -84,5 +84,31 @@ describe('OrdersArgs', () => {
     ['a malformed cursor', { first: 20, after: 'nope' }, 'after'],
   ])('rejects %s', async (_case, args, path) => {
     expect(await failedPaths(OrdersArgs, args)).toEqual([path]);
+  });
+});
+
+describe('TransitionOrderInput', () => {
+  const ORDER_ID = '665f1c2b8a1e4d0012345678';
+  const EMPLOYEE_ID = '66f0e0000000000000000001';
+
+  it.each([
+    ['a start with an employee', { orderId: ORDER_ID, targetState: 'IN_PROGRESS', employeeId: EMPLOYEE_ID }],
+    // The employee rule is a domain rule (EMPLOYEE_REQUIRED), not an input-shape one.
+    ['a start without an employee', { orderId: ORDER_ID, targetState: 'IN_PROGRESS' }],
+    ['a completion', { orderId: ORDER_ID, targetState: 'COMPLETE' }],
+  ])('accepts %s', async (_case, input) => {
+    expect(await failedPaths(TransitionOrderInput, input)).toEqual([]);
+  });
+
+  it.each([
+    ['a malformed orderId', { orderId: 'nope', targetState: 'COMPLETE' }, 'orderId'],
+    ['an unknown targetState', { orderId: ORDER_ID, targetState: 'CANCELLED' }, 'targetState'],
+    [
+      'a malformed employeeId',
+      { orderId: ORDER_ID, targetState: 'IN_PROGRESS', employeeId: 'nope' },
+      'employeeId',
+    ],
+  ])('rejects %s', async (_case, input, path) => {
+    expect(await failedPaths(TransitionOrderInput, input)).toEqual([path]);
   });
 });

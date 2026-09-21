@@ -1,10 +1,13 @@
+import { UseFilters } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { OrdersService } from '../application/orders.service.js';
 import type { Order as OrderModel } from '../domain/order.js';
-import { CreateOrderInput, OrderArgs, OrdersArgs } from './order.inputs.js';
+import { CreateOrderInput, OrderArgs, OrdersArgs, TransitionOrderInput } from './order.inputs.js';
 import { Order, OrderConnection, type PageInfo } from './order.types.js';
+import { OrdersErrorFilter } from './orders-error.filter.js';
 
 @Resolver(() => Order)
+@UseFilters(OrdersErrorFilter)
 export class OrdersResolver {
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -30,5 +33,14 @@ export class OrdersResolver {
   @Mutation(() => Order, { description: 'Creates an order in state OPEN, with no employee assigned.' })
   createOrder(@Args('input') input: CreateOrderInput): Promise<OrderModel> {
     return this.ordersService.create(input);
+  }
+
+  @Mutation(() => Order, {
+    description:
+      'Moves an order to the next state. Skips, reverts and repeats fail with INVALID_TRANSITION, starting without ' +
+      'an employee with EMPLOYEE_REQUIRED, and losing a race with another request with CONCURRENT_MODIFICATION.',
+  })
+  transitionOrder(@Args('input') input: TransitionOrderInput): Promise<OrderModel> {
+    return this.ordersService.transition(input);
   }
 }

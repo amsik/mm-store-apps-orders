@@ -60,3 +60,16 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
 - **Validation:** the integration specs (the `employees` query, `getById` → `null`, the seed run twice, and a module-boundary
   test where injecting the repository or the service class from outside fails to compile the container) were written
   first and seen failing (RED); `yarn seed` run twice against compose Mongo left 18 employees and 80 orders.
+
+### T8 — Transition orders through a GraphQL mutation
+
+- **Delegated:** `OrdersService.transition`, the compare-and-set repository method (Prisma and in-memory), the
+  `transitionOrder` mutation, `assignedEmployee` and `history` on `Order`, the orders error filter and the tests.
+- **Decided or checked by me:** kept the planned `version` field although `state` alone would guard today's writes
+  (it keeps the guard correct once orders can change without a transition); dropped the planned re-read on a missed
+  update, since orders are never deleted; unknown employee → `NOT_FOUND`; `employeeId` ignored on COMPLETE.
+- **Validation:** the service and GraphQL specs were written first and seen failing (RED); every rejected case asserts
+  the stored document is unchanged; the race test was run 8 times, then checked by removing the `state`/`version`
+  condition, which made both concurrent starts succeed and failed the test every time; a manual run of the built API
+  against compose Mongo walked every path and surfaced that orders stored before `version` existed can never
+  transition (documented in ADR 0005 with the reset steps).

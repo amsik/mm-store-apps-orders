@@ -4,6 +4,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsEmail,
+  IsEnum,
   IsInt,
   IsMongoId,
   IsNotEmpty,
@@ -108,4 +109,23 @@ export class OrdersArgs {
   @IsOptional()
   @IsMongoId()
   after?: string;
+}
+
+@InputType()
+export class TransitionOrderInput {
+  @Field(() => ID)
+  @IsMongoId()
+  orderId!: string;
+
+  @Field(() => OrderState, { description: 'Must be the next state: OPEN → IN_PROGRESS → COMPLETE.' })
+  @IsEnum(OrderState)
+  targetState!: OrderState;
+
+  @Field(() => ID, {
+    nullable: true,
+    description: 'Required to move to IN_PROGRESS; ignored otherwise (the employee assigned on start stays).',
+  })
+  @IsOptional()
+  @IsMongoId()
+  employeeId?: string;
 }

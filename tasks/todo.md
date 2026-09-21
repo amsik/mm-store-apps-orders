@@ -144,11 +144,15 @@ state), runs through Node's type stripping (`node prisma/seed.ts`), and loads 18
 `assertTransition` → (for IN_PROGRESS) resolve the employee → atomic conditional update (`where: { id, state: from, version }`)
 that sets state, embeds an `assignedEmployee` snapshot, pushes a `history` entry `{ from, to, at, employeeId }` and increments
 `version`. On `count === 0`, re-read and map to `NOT_FOUND` / `INVALID_TRANSITION` / `CONCURRENT_MODIFICATION`. Expose `history` on `Order`.
+→ Outcome: no re-read on `count === 0`: orders are never deleted, so a miss is always `CONCURRENT_MODIFICATION`
+(a loser that reads after the winner gets `INVALID_TRANSITION` from the domain check). Unknown employee → `NOT_FOUND`;
+`employeeId` is ignored on COMPLETE. The three new codes are mapped by a resolver-scoped `OrdersErrorFilter` until T9.
+Local data seeded before T8 lacks `version` and needs a reset (ADR 0005).
 
 **Acceptance criteria:**
-- [ ] Happy path OPEN → IN_PROGRESS (with a valid employee) → COMPLETE; `updatedAt` advances, `history` has 2 entries, employee is kept on COMPLETE
-- [ ] Rejected with the correct `extensions.code` and **no state change**: skip, revert, repeat, IN_PROGRESS without an employee, unknown employee, unknown order
-- [ ] Two concurrent `IN_PROGRESS` transitions on the same order → exactly one succeeds, the other gets `CONCURRENT_MODIFICATION` or `INVALID_TRANSITION`
+- [x] Happy path OPEN → IN_PROGRESS (with a valid employee) → COMPLETE; `updatedAt` advances, `history` has 2 entries, employee is kept on COMPLETE
+- [x] Rejected with the correct `extensions.code` and **no state change**: skip, revert, repeat, IN_PROGRESS without an employee, unknown employee, unknown order
+- [x] Two concurrent `IN_PROGRESS` transitions on the same order → exactly one succeeds, the other gets `CONCURRENT_MODIFICATION` or `INVALID_TRANSITION`
 
 **Verification:** integration test suite for the mutation, including a `Promise.all` race test; DB state asserted after every rejected case.
 **Dependencies:** T4, T5, T7 · **Files:** `order.types.ts`, `order.inputs.ts`, `orders.resolver.ts`, `orders.service.ts`, `prisma-order.repository.ts`, `schema.prisma`, tests
