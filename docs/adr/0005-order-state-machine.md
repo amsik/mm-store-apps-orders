@@ -32,6 +32,19 @@ they must be easy to review, exhaustively tested, and impossible to bypass throu
   test table to change. The domain folder has a 100% coverage threshold (lines, branches, functions, statements) in
   `vitest.config.js`, enforced in CI by `yarn test:cov`.
 
+- **Implementation (T8):** `OrdersService.transition` loads the order, runs `assertTransition`, resolves the employee
+  when starting (unknown → `NOT_FOUND`), then calls the repository's `transition`: one `updateMany` filtered on
+  `{ id, state: from, version }` that sets the state, the `assignedEmployee` snapshot and `updatedAt`, pushes a
+  `history` entry `{ from, to, at, employeeId }` (`at` from the injected `CLOCK`) and increments `version`.
+  A miss (`count === 0`) is reported as `CONCURRENT_MODIFICATION` without a re-read: orders are never deleted, so
+  the only way to miss is that another write got there first. The loser of a race sees either
+  `CONCURRENT_MODIFICATION` (it read before the winner wrote) or `INVALID_TRANSITION` (after).
+- `employeeId` is only used on the move to `IN_PROGRESS`. On `COMPLETE` it is ignored and the assigned employee stays;
+  reassignment is out of scope.
+- `INVALID_TRANSITION` (with `from`/`to` in `extensions`), `EMPLOYEE_REQUIRED` and `CONCURRENT_MODIFICATION` are mapped
+  by `OrdersErrorFilter`, scoped to the orders resolver, because a filter in `core/` would have to import the orders
+  module. T9 folds it into the central error mapping.
+
 ## Alternatives
 
 - **XState or another state-machine library:** worth it for hierarchical or parallel states, guards with side effects,
@@ -46,6 +59,10 @@ they must be easy to review, exhaustively tested, and impossible to bypass throu
   order is persisted and read through Prisma as plain data; mapping to and from a class adds code without adding
   safety that the pure functions don't already give.
 
+- **Compare-and-set on `state` alone:** enough today, since every transition changes the state and states never
+  repeat. `version` costs one field and keeps the guard correct once an order can change without a transition
+  (e.g. editing line items while OPEN).
+
 ## Consequences
 
 - The state machine is tested in milliseconds with no container, database or mocks.
@@ -53,3 +70,6 @@ they must be easy to review, exhaustively tested, and impossible to bypass throu
   place that needs a decision.
 - Error-to-GraphQL mapping (`INVALID_TRANSITION`, `EMPLOYEE_REQUIRED`) happens at the API edge (T9), so the domain
   stays unaware of GraphQL.
+- Orders stored before `version` existed don't match the conditional update and fail with `CONCURRENT_MODIFICATION`.
+  Only local dev data from before T8 is affected: reset it with `docker compose down -v`, then
+  `docker compose up -d mongo` and `yarn workspace @app/api seed`.

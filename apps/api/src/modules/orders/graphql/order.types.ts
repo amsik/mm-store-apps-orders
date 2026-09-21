@@ -1,4 +1,5 @@
 import { Field, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { Employee } from '../../employees/graphql/employee.types.js';
 import { OrderState } from '../domain/order-state.js';
 
 registerEnumType(OrderState, {
@@ -30,6 +31,21 @@ export class LineItem {
   unitPriceCents!: number;
 }
 
+@ObjectType({ description: 'One step of an order through its lifecycle.' })
+export class OrderStateChange {
+  @Field(() => OrderState)
+  from!: OrderState;
+
+  @Field(() => OrderState)
+  to!: OrderState;
+
+  @Field()
+  at!: Date;
+
+  @Field(() => ID, { nullable: true, description: 'The employee working on the order at that moment.' })
+  employeeId!: string | null;
+}
+
 @ObjectType()
 export class Order {
   @Field(() => ID)
@@ -43,6 +59,15 @@ export class Order {
 
   @Field(() => [LineItem])
   lineItems!: LineItem[];
+
+  @Field(() => Employee, {
+    nullable: true,
+    description: 'Assigned when the order is started and kept once it is complete; null while OPEN.',
+  })
+  assignedEmployee!: Employee | null;
+
+  @Field(() => [OrderStateChange], { description: 'Every transition so far, oldest first.' })
+  history!: OrderStateChange[];
 
   @Field()
   createdAt!: Date;
