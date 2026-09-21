@@ -31,6 +31,9 @@ jobs:
       - run: yarn lint
       - run: yarn typecheck
       - run: yarn test
+      # The integration tests regenerate apps/api/schema.gql; a diff means the committed contract is stale.
+      - name: Check GraphQL schema is up to date
+        run: git diff --exit-code -- apps/api/schema.gql
       - run: yarn build
 
   pr-conventions:

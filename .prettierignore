@@ -3,3 +3,4 @@ dist/
 coverage/
 yarn.lock
 tasks/
+apps/api/schema.gql

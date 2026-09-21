@@ -9,7 +9,7 @@ Conventions for every task:
   "Generated with …" lines or similar. AI usage is documented in `AI_USAGE.md` only.
 
 Commands (after T1): `yarn lint`, `yarn typecheck`, `yarn test`, `yarn build`, `yarn workspace @app/api test:int`.
-Stack: NestJS 11 (IoC + modules) · `@nestjs/graphql` + ApolloDriver (code-first) · Prisma + MongoDB · class-validator · nestjs-pino.
+Stack: NestJS 12 (IoC + modules; planned 11, see ADR 0002) · `@nestjs/graphql` + ApolloDriver (code-first) · Prisma + MongoDB · class-validator · nestjs-pino.
 
 ---
 
@@ -40,13 +40,13 @@ test → build, plus a PR-title Conventional Commit check). `.nvmrc` (Node 24 LT
 ### T2: `feat(api): bootstrap nestjs graphql api with config and health check`
 **Description:** NestJS app (`AppModule`), `GraphQLModule.forRoot<ApolloDriverConfig>` (code-first, `autoSchemaFile: schema.gql` committed),
 `ConfigModule` with a Zod `validate`, `nestjs-pino` logger, global `ValidationPipe`, `enableShutdownHooks()`, and a `HealthModule` with a
-`health` query. IoC groundwork: `src/core/di/tokens.ts` with `APP_CONFIG` (`useFactory`, typed) and `CLOCK` (`SystemClock`). Decide the API test runner here (Vitest+SWC vs Jest). ADRs: monorepo, NestJS as IoC/framework (with alternatives), code-first schema.
+`health` query. IoC groundwork: `src/core/di/tokens.ts` with `APP_CONFIG` (`useFactory`, typed) and `CLOCK` (`SystemClock`). Decide the API test runner here (Vitest+SWC vs Jest) → Vitest + `unplugin-swc`. ADRs: monorepo, NestJS as IoC/framework (with alternatives), code-first schema.
 
 **Acceptance criteria:**
-- [ ] `yarn workspace @app/api dev` starts; `{ health { status } }` returns `OK`
-- [ ] Missing or invalid env fails at boot with a readable message listing the offending keys (unit-tested)
-- [ ] `schema.gql` is generated and committed; CI fails if it's stale
-- [ ] Consumers inject `APP_CONFIG` (typed `AppConfig`), never `process.env`; an integration test overrides `APP_CONFIG` via `overrideProvider`
+- [x] `yarn workspace @app/api dev` starts; `{ health { status } }` returns `OK`
+- [x] Missing or invalid env fails at boot with a readable message listing the offending keys (unit-tested)
+- [x] `schema.gql` is generated and committed; CI fails if it's stale
+- [x] Consumers inject `APP_CONFIG` (typed `AppConfig`), never `process.env`; an integration test overrides `APP_CONFIG` via `overrideProvider`
 
 **Verification:** unit tests for the config validator; integration test boots `AppModule` via `@nestjs/testing` and queries `/graphql` with supertest.
 **Dependencies:** T1 · **Files:** `apps/api/src/{main.ts,app.module.ts}`, `src/core/{config,logging}/*`, `src/modules/health/*`, `schema.gql`, `docs/adr/0001..0003`
