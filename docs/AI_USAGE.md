@@ -100,3 +100,16 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
   `createCache()`, so the pagination merge is covered. Manual run in Chrome against the built API and compose Mongo:
   seeded orders listed, "Load more" went from 20 to 40 rows, the COMPLETE filter showed only complete orders, and with
   the API stopped the page showed "Could not load orders: Failed to fetch" with a Retry button instead of a blank page.
+
+### T11 — Order details and state transitions
+
+- **Delegated:** the details screen (customer, items, total, employee, history), the Start/Complete actions, the hash
+  router and the RTL tests.
+- **Decided or checked by me:** only the next valid action is rendered, but the server stays the authority: a rejected
+  transition shows the server's message and refetches the order; hash routes instead of a router library (ADR 0007); the
+  list switched to `cache-and-network` so it reflects transitions made on the details screen.
+- **Validation:** the details and route specs were written first and seen failing (RED). Manual run in Chrome against the
+  built API: a seeded order was started with an employee and updated in place; the order was then completed with `curl`
+  behind the UI's back, and clicking Complete showed "COMPLETE is final" and switched the view to COMPLETE with no
+  actions; the list showed the new state. Starting an order stored before T8 (no `version`) was rejected and the view
+  stayed OPEN, which is the legacy-data case already documented in ADR 0005.

@@ -210,9 +210,13 @@ and a "load more" (cursor) button, with loading, error and empty states. CI exte
 ("Start" with an employee picker, "Complete"). Server errors (e.g. a race) are displayed and the data refetched.
 
 **Acceptance criteria:**
-- [ ] Start requires picking an employee; after success the state and employee update without a reload
-- [ ] COMPLETE orders show no actions
-- [ ] A server-rejected transition shows the error message and the view reflects the true server state
+→ Outcome: hash routes (`#/orders/:id`, ADR 0007); the details query also loads `employees`, which serve both the picker
+and the names in the history. The mutation returns the same `OrderDetails` fragment, so the normalized cache updates
+the screen; on a rejection the order is refetched.
+
+- [x] Start requires picking an employee; after success the state and employee update without a reload
+- [x] COMPLETE orders show no actions
+- [x] A server-rejected transition shows the error message and the view reflects the true server state
 
 **Verification:** RTL tests for action visibility per state; manual.
 **Dependencies:** T8, T10 · **Scope:** M

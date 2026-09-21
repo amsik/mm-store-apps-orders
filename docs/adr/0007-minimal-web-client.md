@@ -10,7 +10,13 @@ with the API.
 
 ## Decision
 
-- **Vite + React 19 + TypeScript**, plain CSS, no UI kit and no router until a screen needs one.
+- **Vite + React 19 + TypeScript**, plain CSS, no UI kit. Screens are hash routes (`#/`, `#/orders/:id`) read through
+  `useSyncExternalStore`: every screen is linkable (handy for E2E and the demo) and the bundle stays static files with no
+  server rewrites. A router library would earn its place with nested layouts or loaders, which three screens do not need.
+- The details screen shows **only the next valid action** (Start with an employee picker, Complete, or nothing). The
+  server stays the authority: when it rejects a transition (a race, stale data), the message is shown and the order is
+  refetched, so the screen always ends up showing the stored state. The list uses `cache-and-network`, so it picks up
+  transitions made on the details screen.
 - **Apollo Client 4** with a normalized `InMemoryCache`. The `orders` field has a type policy: `keyArgs: ['filter']`
   keeps one list per state filter, and `merge` appends a page when the request has an `after` cursor and replaces
   the list otherwise. "Load more" is therefore just `fetchMore({ variables: { after: endCursor } })`.
