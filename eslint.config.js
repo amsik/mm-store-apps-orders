@@ -31,5 +31,33 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Domain code is plain TypeScript: business rules stay testable without a container, database or schema.
+    files: ['apps/api/src/modules/*/domain/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@nestjs/*',
+                '@prisma/*',
+                '@apollo/*',
+                'graphql',
+                'class-validator',
+                'class-transformer',
+              ],
+              message: 'The domain layer must not depend on frameworks or infrastructure.',
+            },
+            {
+              group: ['**/application/**', '**/infrastructure/**', '**/graphql/**', '**/core/**'],
+              message: 'The domain layer must not import outer layers.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
 );

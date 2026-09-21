@@ -217,10 +217,10 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 - [x] T2 `feat(api): bootstrap nestjs graphql api with config and health check`
 - [x] T3 `feat(api): add prisma mongodb persistence and integration test harness`
 
-### Checkpoint A: Foundation (after T3)
+### Checkpoint A: Foundation (after T3) ✅
 
 ### Phase 2: Core domain + API
-- [ ] T4 `feat(orders): implement order state machine domain`
+- [x] T4 `feat(orders): implement order state machine domain`
 - [ ] T5 `feat(orders): create order and get order details`
 - [ ] T6 `feat(orders): list orders with state filter and cursor pagination`
 - [ ] T7 `feat(employees): add employees module with seed data`

@@ -69,9 +69,9 @@ Add `docker-compose.yml` (mongo with `rs0` init + healthcheck), the Prisma schem
 **Scope:** M
 
 ### ✅ Checkpoint A — Foundation
-- [ ] Clean clone → install → compose up → dev server + health OK
-- [ ] CI green, protection working, 3 PRs merged with conventional titles
-- [ ] Review with the user before domain work
+- [x] Clean clone → install → compose up → dev server + health OK
+- [x] CI green, protection working, 3 PRs merged with conventional titles (required status checks added to `main` protection at this checkpoint)
+- [x] Review with the user before domain work
 
 ---
 
@@ -83,9 +83,9 @@ Add `docker-compose.yml` (mongo with `rs0` init + healthcheck), the Prisma schem
 No framework imports. ADR: state-machine design + transition API shape.
 
 **Acceptance criteria:**
-- [ ] Exhaustive table-driven tests over all 9 `from × to` pairs: only `OPEN→IN_PROGRESS` and `IN_PROGRESS→COMPLETE` pass
-- [ ] Self-transition, skip (`OPEN→COMPLETE`) and revert (`COMPLETE→*`, `IN_PROGRESS→OPEN`) are rejected with an `InvalidTransitionError` carrying `from`/`to`
-- [ ] `OPEN→IN_PROGRESS` without an employee throws `EmployeeRequiredError`
+- [x] Exhaustive table-driven tests over all 9 `from × to` pairs: only `OPEN→IN_PROGRESS` and `IN_PROGRESS→COMPLETE` pass
+- [x] Self-transition, skip (`OPEN→COMPLETE`) and revert (`COMPLETE→*`, `IN_PROGRESS→OPEN`) are rejected with an `InvalidTransitionError` carrying `from`/`to`
+- [x] `OPEN→IN_PROGRESS` without an employee throws `EmployeeRequiredError`
 
 **Verification:** `yarn workspace @app/api test orders/domain`; 100% coverage on the domain folder.
 **Dependencies:** T1 (logically independent of DB) · **Files:** `src/modules/orders/domain/{order-state.ts,state-machine.ts,errors.ts}`, `*.spec.ts`, `docs/adr/0005`

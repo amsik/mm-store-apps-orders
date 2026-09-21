@@ -36,7 +36,8 @@ jobs:
           key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('apps/api/test/setup/mongo-replset.ts') }}
       - run: yarn lint
       - run: yarn typecheck
-      - run: yarn test
+      # Fails if a coverage threshold in vitest.config.js is not met.
+      - run: yarn test:cov
       # The integration tests regenerate apps/api/schema.gql; a diff means the committed contract is stale.
       - name: Check GraphQL schema is up to date
         run: git diff --exit-code -- apps/api/schema.gql
