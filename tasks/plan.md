@@ -232,7 +232,7 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 ### Phase 3: Minimal frontend
 - [x] T10 `feat(web): scaffold web app with orders list`
 - [x] T11 `feat(web): order details with state transitions`
-- [ ] T12 `feat(web): create order form and e2e tests`
+- [x] T12 `feat(web): create order form and e2e tests`
 
 ### Checkpoint C: Full stack (after T12)
 

@@ -1,6 +1,7 @@
+import { CreateOrderForm } from './orders/CreateOrderForm';
 import { OrderDetails } from './orders/OrderDetails';
 import { OrdersList } from './orders/OrdersList';
-import { parseRoute, useHash } from './router';
+import { orderHref, parseRoute, useHash } from './router';
 
 export function App() {
   const route = parseRoute(useHash());
@@ -11,17 +12,26 @@ export function App() {
         <h1>
           <a href="#/">Store orders</a>
         </h1>
+        <nav>
+          <a href="#/">Orders</a> · <a href="#/new">New order</a>
+        </nav>
       </header>
       <main>
-        {route.name === 'order' ? (
+        {route.name === 'orders' && <OrdersList />}
+        {route.name === 'new' && (
+          <CreateOrderForm
+            onCreated={(id) => {
+              window.location.hash = orderHref(id);
+            }}
+          />
+        )}
+        {route.name === 'order' && (
           <>
             <p>
               <a href="#/">← All orders</a>
             </p>
             <OrderDetails key={route.id} orderId={route.id} />
           </>
-        ) : (
-          <OrdersList />
         )}
       </main>
     </>

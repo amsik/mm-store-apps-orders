@@ -6,5 +6,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["*.js", "scripts/**/*.js"]
+  "include": ["*.js", "*.ts", "scripts/**/*.js", "e2e/**/*.ts"]
 }
