@@ -125,11 +125,15 @@ sorted newest first, `first` capped at 100, index `{ state: 1, _id: -1 }`.
 ### T7: `feat(employees): add employees module with seed data`
 **Description:** `employees` module: `employees` query (for the UI picker) and `EmployeesService.getById` used by orders
 (`EmployeesModule` exports the service; `OrdersModule` imports the module, never the repository). An idempotent seed script (`yarn seed`) with ~5 employees and sample orders.
+→ Outcome: `EmployeesService` is exported only as `EMPLOYEE_DIRECTORY` (`useExisting`); `OrdersModule` imports
+`EmployeesModule` now and T8 injects the token. The seed inserts missing records by fixed id (never overwrites demo
+state), runs through Node's type stripping (`node prisma/seed.ts`), and loads 18 employees and 80 OPEN orders
+(deterministic, generated from fixed customer/product lists, enough for several pages) until T8 adds `history`.
 
 **Acceptance criteria:**
-- [ ] `employees` returns the seeded list; running the seed twice produces no duplicates
-- [ ] `getById` for an unknown id returns `null` (orders decides the error)
-- [ ] `EmployeesModule` exports only the `EMPLOYEE_DIRECTORY` binding; orders injects the token, never the employees repository
+- [x] `employees` returns the seeded list; running the seed twice produces no duplicates
+- [x] `getById` for an unknown id returns `null` (orders decides the error)
+- [x] `EmployeesModule` exports only the `EMPLOYEE_DIRECTORY` binding; orders injects the token, never the employees repository
 
 **Verification:** integration tests; manual `yarn seed` against compose Mongo.
 **Dependencies:** T3 · **Files:** `modules/employees/**`, `prisma/seed.ts`, tests

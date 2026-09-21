@@ -48,3 +48,15 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
   the new lint rule was checked with a deliberate Prisma import in `application/`; a manual run of the built API
   against compose Mongo (create → get, unknown id, malformed id). That run hit a local Homebrew `mongod` holding
   `127.0.0.1:27017` first, and `MONGO_PORT=27018` got around it.
+
+### T7 — Employees module and seed data
+
+- **Delegated:** the employees module (port, Prisma adapter, service, `employees` query), the seed script and the tests.
+- **Decided or checked by me:** `EmployeesModule` exports only the `EMPLOYEE_DIRECTORY` port (`useExisting` on the
+  service), so orders can never reach the repository; the seed only inserts missing records by fixed id, so re-running it
+  never duplicates data or resets orders moved during a demo; Node 24's type stripping runs the seed with no extra
+  dependency (no `ts-node`/`tsx`); sample orders stay OPEN until T8 adds `history`; after review I asked for more data
+  (18 employees, 80 orders), generated deterministically from fixed lists so every run yields the same ids and contents.
+- **Validation:** the integration specs (the `employees` query, `getById` → `null`, the seed run twice, and a module-boundary
+  test where injecting the repository or the service class from outside fails to compile the container) were written
+  first and seen failing (RED); `yarn seed` run twice against compose Mongo left 18 employees and 80 orders.

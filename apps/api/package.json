@@ -12,7 +12,8 @@
     "test": "yarn test:unit && yarn test:int",
     "test:unit": "run -T vitest run",
     "test:int": "run -T vitest run -c vitest.int.config.js",
-    "db:push": "prisma db push --skip-generate"
+    "db:push": "prisma db push --skip-generate",
+    "seed": "node --env-file-if-exists=.env prisma/seed.ts"
   },
   "dependencies": {
     "@apollo/server": "^5",

@@ -223,7 +223,7 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 - [x] T4 `feat(orders): implement order state machine domain`
 - [ ] T5 `feat(orders): create order and get order details`
 - [ ] T6 `feat(orders): list orders with state filter and cursor pagination`
-- [ ] T7 `feat(employees): add employees module with seed data`
+- [x] T7 `feat(employees): add employees module with seed data`
 - [ ] T8 `feat(orders): transition orders through graphql mutation`
 - [ ] T9 `feat(api): harden error handling, input limits and request logging`
 
