@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../core/prisma/prisma.service.js';
-import type { NewOrder, OrderRepository } from '../application/order.repository.js';
+import type { ListOrdersQuery, NewOrder, OrderRepository } from '../application/order.repository.js';
 import type { Order } from '../domain/order.js';
 
 // Only the fields of the domain `Order`, so storage-only fields never leak past the repository.
@@ -26,5 +26,15 @@ export class PrismaOrderRepository implements OrderRepository {
 
   findById(id: string): Promise<Order | null> {
     return this.prisma.order.findUnique({ where: { id }, select: ORDER_SELECT });
+  }
+
+  // Served by the `{ state: 1, _id: -1 }` index when filtered, and by the `_id` index otherwise.
+  list({ state, before, limit }: ListOrdersQuery): Promise<Order[]> {
+    return this.prisma.order.findMany({
+      where: { state, id: before ? { lt: before } : undefined },
+      orderBy: { id: 'desc' },
+      take: limit,
+      select: ORDER_SELECT,
+    });
   }
 }

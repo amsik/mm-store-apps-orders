@@ -1,7 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
-import { CreateOrderInput, OrderArgs } from './order.inputs.js';
+import { CreateOrderInput, OrderArgs, OrdersArgs } from './order.inputs.js';
 
 const VALID = {
   customer: { name: 'Ada Lovelace', email: 'ada@example.com' },
@@ -62,5 +62,27 @@ describe('OrderArgs', () => {
 
   it('rejects a malformed id', async () => {
     expect(await failedPaths(OrderArgs, { id: 'nope' })).toEqual(['id']);
+  });
+});
+
+describe('OrdersArgs', () => {
+  it.each([
+    ['only first', { first: 20 }],
+    ['first 1', { first: 1 }],
+    ['first 100', { first: 100 }],
+    ['a cursor', { first: 20, after: '665f1c2b8a1e4d0012345678' }],
+    ['a state filter', { first: 20, filter: { state: 'OPEN' } }],
+    ['an empty filter', { first: 20, filter: {} }],
+  ])('accepts %s', async (_case, args) => {
+    expect(await failedPaths(OrdersArgs, args)).toEqual([]);
+  });
+
+  it.each([
+    ['first 0', { first: 0 }, 'first'],
+    ['a negative first', { first: -1 }, 'first'],
+    ['first above 100', { first: 101 }, 'first'],
+    ['a malformed cursor', { first: 20, after: 'nope' }, 'after'],
+  ])('rejects %s', async (_case, args, path) => {
+    expect(await failedPaths(OrdersArgs, args)).toEqual([path]);
   });
 });

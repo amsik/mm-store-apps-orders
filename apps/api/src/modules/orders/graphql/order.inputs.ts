@@ -7,15 +7,19 @@ import {
   IsInt,
   IsMongoId,
   IsNotEmpty,
+  IsOptional,
   Max,
   MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
+import { OrderState } from '../domain/order-state.js';
 
 // GraphQL types check the shape; these decorators check the values (run by the global ValidationPipe).
 export const MAX_LINE_ITEMS = 100;
 export const MAX_QUANTITY = 1_000;
+export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_PAGE_SIZE = 100;
 
 @InputType()
 export class CustomerInput {
@@ -74,4 +78,34 @@ export class OrderArgs {
   @Field(() => ID)
   @IsMongoId()
   id!: string;
+}
+
+@InputType()
+export class OrderFilter {
+  @Field(() => OrderState, { nullable: true, description: 'Only orders in this state.' })
+  @IsOptional()
+  state?: OrderState;
+}
+
+@ArgsType()
+export class OrdersArgs {
+  @Field(() => OrderFilter, { nullable: true })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => OrderFilter)
+  filter?: OrderFilter;
+
+  @Field(() => Int, {
+    defaultValue: DEFAULT_PAGE_SIZE,
+    description: `Page size, 1 to ${String(MAX_PAGE_SIZE)}.`,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(MAX_PAGE_SIZE)
+  first: number = DEFAULT_PAGE_SIZE;
+
+  @Field(() => ID, { nullable: true, description: '`pageInfo.endCursor` of the previous page.' })
+  @IsOptional()
+  @IsMongoId()
+  after?: string;
 }

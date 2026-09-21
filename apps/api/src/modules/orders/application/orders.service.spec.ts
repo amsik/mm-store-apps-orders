@@ -56,4 +56,54 @@ describe('OrdersService', () => {
       await expect(service.getById(id)).rejects.toMatchObject({ id });
     });
   });
+
+  describe('list', () => {
+    /** Creates `count` orders oldest first and returns their ids newest first, the order `list` uses. */
+    async function seed(count: number, state: OrderState = OrderState.OPEN): Promise<string[]> {
+      const ids: string[] = [];
+      for (let i = 0; i < count; i++) ids.unshift((await repository.create({ ...INPUT, state })).id);
+      return ids;
+    }
+
+    it('returns an empty page when there are no orders', async () => {
+      expect(await service.list({ first: 10 })).toEqual({ nodes: [], endCursor: null, hasNextPage: false });
+    });
+
+    it('returns orders newest first', async () => {
+      const ids = await seed(3);
+
+      const page = await service.list({ first: 10 });
+
+      expect(page.nodes.map((order) => order.id)).toEqual(ids);
+      expect(page.hasNextPage).toBe(false);
+      expect(page.endCursor).toBe(ids[2]);
+    });
+
+    it('pages through 25 orders 10 at a time with no duplicates or gaps', async () => {
+      const ids = await seed(25);
+
+      const first = await service.list({ first: 10 });
+      const second = await service.list({ first: 10, after: first.endCursor ?? undefined });
+      const third = await service.list({ first: 10, after: second.endCursor ?? undefined });
+
+      expect([first, second, third].map((page) => page.nodes.length)).toEqual([10, 10, 5]);
+      expect([first, second, third].map((page) => page.hasNextPage)).toEqual([true, true, false]);
+      expect([...first.nodes, ...second.nodes, ...third.nodes].map((order) => order.id)).toEqual(ids);
+    });
+
+    it('reports no next page when the last page is exactly full', async () => {
+      await seed(10);
+
+      expect((await service.list({ first: 10 })).hasNextPage).toBe(false);
+    });
+
+    it('filters by state', async () => {
+      await seed(2, OrderState.OPEN);
+      const inProgress = await seed(3, OrderState.IN_PROGRESS);
+
+      const page = await service.list({ first: 10, state: OrderState.IN_PROGRESS });
+
+      expect(page.nodes.map((order) => order.id)).toEqual(inProgress);
+    });
+  });
 });

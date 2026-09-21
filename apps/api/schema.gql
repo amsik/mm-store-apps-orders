@@ -67,11 +67,28 @@ type Order {
   updatedAt: DateTime!
 }
 
+"""A page of orders, newest first."""
+type OrderConnection {
+  nodes: [Order!]!
+  pageInfo: PageInfo!
+}
+
+input OrderFilter {
+  """Only orders in this state."""
+  state: OrderState
+}
+
 """OPEN → IN_PROGRESS → COMPLETE, no skipping or reverting."""
 enum OrderState {
   COMPLETE
   IN_PROGRESS
   OPEN
+}
+
+type PageInfo {
+  """Pass as `after` to fetch the next page; null when the page is empty."""
+  endCursor: ID
+  hasNextPage: Boolean!
 }
 
 type Query {
@@ -80,4 +97,16 @@ type Query {
 
   """One order by id. Fails with NOT_FOUND if it does not exist."""
   order(id: ID!): Order!
+
+  """
+  Orders newest first, optionally filtered by state, with cursor pagination.
+  """
+  orders(
+    """`pageInfo.endCursor` of the previous page."""
+    after: ID
+    filter: OrderFilter
+
+    """Page size, 1 to 100."""
+    first: Int! = 20
+  ): OrderConnection!
 }

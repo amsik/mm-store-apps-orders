@@ -50,3 +50,24 @@ export class Order {
   @Field()
   updatedAt!: Date;
 }
+
+@ObjectType()
+export class PageInfo {
+  @Field(() => ID, {
+    nullable: true,
+    description: 'Pass as `after` to fetch the next page; null when the page is empty.',
+  })
+  endCursor!: string | null;
+
+  @Field()
+  hasNextPage!: boolean;
+}
+
+@ObjectType({ description: 'A page of orders, newest first.' })
+export class OrderConnection {
+  @Field(() => [Order])
+  nodes!: Order[];
+
+  @Field(() => PageInfo)
+  pageInfo!: PageInfo;
+}

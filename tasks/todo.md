@@ -114,9 +114,9 @@ No framework imports. ADR: state-machine design + transition API shape.
 sorted newest first, `first` capped at 100, index `{ state: 1, _id: -1 }`.
 
 **Acceptance criteria:**
-- [ ] Filtering by state returns only matching orders; no filter returns all
-- [ ] Paging through 25 orders with `first: 10` yields 10/10/5 with no duplicates or gaps, and `hasNextPage` is correct
-- [ ] `first` ≤ 0 or > 100, or a malformed cursor → `BAD_USER_INPUT`
+- [x] Filtering by state returns only matching orders; no filter returns all
+- [x] Paging through 25 orders with `first: 10` yields 10/10/5 with no duplicates or gaps, and `hasNextPage` is correct
+- [x] `first` ≤ 0 or > 100, or a malformed cursor → `BAD_USER_INPUT`
 
 **Verification:** integration tests with seeded fixtures.
 **Dependencies:** T5 · **Files:** `order.types.ts`, `order.inputs.ts`, `orders.resolver.ts`, `orders.service.ts`, `prisma-order.repository.ts`, `schema.prisma`, tests
