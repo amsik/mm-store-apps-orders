@@ -233,7 +233,7 @@ the E2E validation case relies on that (`ada@example`).
 
 - [x] E2E: create order → appears in the list → start with an employee → complete → no actions left
 - [x] E2E: server-side validation error is shown in the form
-- [ ] The E2E job runs in CI and is green
+- [x] The E2E job runs in CI and is green
 
 **Verification:** `yarn e2e` locally and in CI.
 **Dependencies:** T11 · **Files:** `apps/web/src/orders/CreateOrderForm.tsx`, `e2e/*.spec.ts`, `playwright.config.ts`, `.github/workflows/ci.yml`
