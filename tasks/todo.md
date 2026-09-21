@@ -28,10 +28,10 @@ typescript-eslint) + Prettier, Vitest, commitlint + husky, and a GitHub Actions 
 test → build, plus a PR-title Conventional Commit check). `.nvmrc` (Node 24 LTS).
 
 **Acceptance criteria:**
-- [ ] `yarn install && yarn lint && yarn typecheck && yarn test && yarn build` pass from a clean clone
-- [ ] A non-conventional commit message is rejected locally; a bad PR title fails CI
-- [ ] A commit message with a `Co-Authored-By:` trailer is rejected by commitlint; a PR body with `Co-Authored-By` / "Generated with" fails CI
-- [ ] CI runs on the PR and is green
+- [x] `yarn install && yarn lint && yarn typecheck && yarn test && yarn build` pass from a clean clone
+- [x] A non-conventional commit message is rejected locally; a bad PR title fails CI
+- [x] A commit message with a `Co-Authored-By:` trailer is rejected by commitlint; a PR body with `Co-Authored-By` / "Generated with" fails CI
+- [x] CI runs on the PR and is green
 
 **Verification:** CI run link on the PR; local clean-clone run.
 **Dependencies:** T0 · **Files:** `package.json`, `.yarnrc.yml`, `tsconfig.base.json`, `eslint.config.js`, `.github/workflows/ci.yml`, `commitlint.config.js`, `apps/api/package.json`
