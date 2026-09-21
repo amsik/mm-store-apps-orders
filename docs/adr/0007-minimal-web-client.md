@@ -1,0 +1,40 @@
+# 0007 — Minimal web client: Vite, React, Apollo Client and committed codegen
+
+**Status:** Accepted (2026-09-21)
+
+## Context
+
+The backend is what is being assessed, but the demo needs a UI: list orders, open one, move it through its
+states and create new ones. The UI must stay small, typed against the real contract, and cheap to keep in sync
+with the API.
+
+## Decision
+
+- **Vite + React 19 + TypeScript**, plain CSS, no UI kit and no router until a screen needs one.
+- **Apollo Client 4** with a normalized `InMemoryCache`. The `orders` field has a type policy: `keyArgs: ['filter']`
+  keeps one list per state filter, and `merge` appends a page when the request has an `after` cursor and replaces
+  the list otherwise. "Load more" is therefore just `fetchMore({ variables: { after: endCursor } })`.
+- **GraphQL Code Generator (`client` preset)** reads the committed `apps/api/schema.gql` (ADR 0003) and emits typed
+  documents into `apps/web/src/gql/`. The output is committed; CI regenerates it and fails on a diff. A schema change
+  that breaks the web app therefore fails `typecheck` in the same PR.
+- The API URL comes from `VITE_API_URL` at build time (default `http://localhost:3000/graphql`). The API allows the
+  web origin through `CORS_ORIGINS` (ADR 0006), so no dev proxy is needed.
+- Tests: Vitest + jsdom + React Testing Library with Apollo's `MockedProvider`, using the real cache policy from
+  `createCache()`, so pagination merging is tested too. Full-stack behaviour is covered by Playwright (T12).
+
+## Alternatives
+
+- **Next.js / Remix.** SSR and routing conventions that a three-screen internal tool does not need, plus a Node
+  server to deploy instead of static files.
+- **urql or TanStack Query + `graphql-request`.** Smaller, but Apollo matches the Apollo Server side, and its
+  normalized cache updates the list after a mutation without refetch plumbing.
+- **Generating types at build time instead of committing them.** One generated folder fewer in the repo, but the
+  contract diff disappears from PRs and every build needs the codegen step first.
+- **Relay-style `edges { node }` pagination with `relayStylePagination()`.** The API exposes `nodes` + `pageInfo`
+  (simpler for clients), so a ten-line custom `merge` is enough.
+
+## Consequences
+
+- One typed contract from the NestJS decorators to the React components.
+- Contributors run `yarn workspace @app/web codegen` after changing a query or the schema; CI enforces it.
+- The bundle is ~120 kB gzipped, mostly React and Apollo. That is acceptable for an internal tool.

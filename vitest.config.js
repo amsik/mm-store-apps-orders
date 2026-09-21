@@ -10,8 +10,8 @@ export default defineConfig({
     // Coverage is collected across all projects, so it lives here rather than in the per-app configs.
     coverage: {
       provider: 'v8',
-      include: ['apps/api/src/**/*.ts'],
-      exclude: ['**/*.spec.ts'],
+      include: ['apps/api/src/**/*.ts', 'apps/web/src/**/*.{ts,tsx}'],
+      exclude: ['**/*.spec.ts', '**/*.test.{ts,tsx}', 'apps/web/src/{gql,test}/**'],
       thresholds: {
         // Domain modules are pure business rules: every line and branch must be exercised.
         'apps/api/src/modules/*/domain/**': { lines: 100, branches: 100, functions: 100, statements: 100 },

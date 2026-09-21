@@ -88,3 +88,15 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
   rule threw a 500 until it was set to report through the validation context. A manual run of the built API with
   `NODE_ENV=production` and an unreachable database checked a masked `INTERNAL_SERVER_ERROR`, the echoed request id, a log
   line with `requestId`, `req.id` and the Prisma stack, rejected introspection, and a 413 for a 150 kB body.
+
+### T10 — Web scaffold and orders list
+
+- **Delegated:** the Vite/React workspace, Apollo Client setup, codegen config, the orders list (state filter, "Load
+  more", loading/error/empty states), the RTL tests and the CI drift check.
+- **Decided or checked by me:** types are generated from the committed SDL and committed too, so a breaking schema change
+  fails the web typecheck in the same PR (ADR 0007); the `orders` cache policy keys by `filter` only and appends pages on
+  `after`; no router and no UI kit yet; the API URL is a build-time `VITE_API_URL`, relying on the API's CORS allow-list.
+- **Validation:** the list and formatting tests were written first and seen failing (RED); the tests use the real
+  `createCache()`, so the pagination merge is covered. Manual run in Chrome against the built API and compose Mongo:
+  seeded orders listed, "Load more" went from 20 to 40 rows, the COMPLETE filter showed only complete orders, and with
+  the API stopped the page showed "Could not load orders: Failed to fetch" with a Retry button instead of a blank page.

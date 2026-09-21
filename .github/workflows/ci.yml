@@ -41,6 +41,9 @@ jobs:
       # The integration tests regenerate apps/api/schema.gql; a diff means the committed contract is stale.
       - name: Check GraphQL schema is up to date
         run: git diff --exit-code -- apps/api/schema.gql
+      # The web app's types are generated from that schema and committed; a diff means codegen drift.
+      - name: Check web GraphQL types are up to date
+        run: yarn workspace @app/web codegen && git diff --exit-code -- apps/web/src/gql
       - run: yarn build
 
   pr-conventions:
