@@ -2,9 +2,9 @@ import type { Server } from 'node:http';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { AppConfig } from '../src/core/config/app-config.js';
 import { APP_CONFIG } from '../src/core/di/tokens.js';
 import { createTestApp } from './setup/create-test-app.js';
+import { testConfig } from './setup/test-config.js';
 
 const HEALTH_QUERY = '{ health { status db } }';
 
@@ -26,12 +26,9 @@ describe('health (integration)', () => {
 
   it('reports the database as DOWN, without failing the query, when MongoDB is unreachable', async () => {
     // Nothing listens on port 1; the short server selection timeout keeps the test fast.
-    const unreachable: AppConfig = {
-      nodeEnv: 'test',
-      port: 0,
-      logLevel: 'silent',
+    const unreachable = testConfig({
       databaseUrl: 'mongodb://127.0.0.1:1/orders?directConnection=true&serverSelectionTimeoutMS=200',
-    };
+    });
     app = await createTestApp((builder) => builder.overrideProvider(APP_CONFIG).useValue(unreachable));
 
     const res = await request(app.getHttpServer()).post('/graphql').send({ query: HEALTH_QUERY }).expect(200);

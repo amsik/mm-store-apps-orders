@@ -1,5 +1,4 @@
-import type { Server } from 'node:http';
-import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 import { AppModule } from '../../src/app.module.js';
 import { configureApp } from '../../src/app.setup.js';
@@ -10,9 +9,9 @@ import { configureApp } from '../../src/app.setup.js';
  */
 export async function createTestApp(
   customize: (builder: TestingModuleBuilder) => TestingModuleBuilder = (builder) => builder,
-): Promise<INestApplication<Server>> {
+): Promise<NestExpressApplication> {
   const moduleRef = await customize(Test.createTestingModule({ imports: [AppModule] })).compile();
-  const app = configureApp(moduleRef.createNestApplication<INestApplication<Server>>());
+  const app = configureApp(moduleRef.createNestApplication<NestExpressApplication>());
   await app.init();
   return app;
 }

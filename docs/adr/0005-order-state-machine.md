@@ -43,7 +43,7 @@ they must be easy to review, exhaustively tested, and impossible to bypass throu
   reassignment is out of scope.
 - `INVALID_TRANSITION` (with `from`/`to` in `extensions`), `EMPLOYEE_REQUIRED` and `CONCURRENT_MODIFICATION` are mapped
   by `OrdersErrorFilter`, scoped to the orders resolver, because a filter in `core/` would have to import the orders
-  module. T9 folds it into the central error mapping.
+  module. T9 keeps it there, behind a global catch-all filter (ADR 0006).
 
 ## Alternatives
 
