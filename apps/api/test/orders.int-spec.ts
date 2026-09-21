@@ -27,6 +27,20 @@ const GET_ORDER = `
   }
 `;
 
+const LIST_ORDERS = `
+  query Orders($filter: OrderFilter, $first: Int, $after: ID) {
+    orders(filter: $filter, first: $first, after: $after) {
+      nodes { id state }
+      pageInfo { endCursor hasNextPage }
+    }
+  }
+`;
+
+interface OrderConnection {
+  nodes: { id: string; state: string }[];
+  pageInfo: { endCursor: string | null; hasNextPage: boolean };
+}
+
 const VALID_INPUT = {
   customer: { name: 'Ada Lovelace', email: 'ada@example.com' },
   lineItems: [
@@ -134,6 +148,80 @@ describe('orders (integration)', () => {
       expect(res.errors?.[0]?.extensions).toMatchObject({
         code: 'BAD_USER_INPUT',
         fields: [{ path: 'id', messages: [expect.any(String)] }],
+      });
+    });
+  });
+
+  describe('orders', () => {
+    /** Creates `count` orders oldest first and returns their ids newest first. */
+    async function seed(count: number): Promise<string[]> {
+      const ids: string[] = [];
+      for (let i = 0; i < count; i++) {
+        const res = await gql(CREATE_ORDER, { input: VALID_INPUT });
+        ids.unshift((res.data?.createOrder as { id: string }).id);
+      }
+      return ids;
+    }
+
+    async function list(variables: object): Promise<OrderConnection> {
+      const res = await gql(LIST_ORDERS, variables);
+      expect(res.errors).toBeUndefined();
+      return res.data?.orders as OrderConnection;
+    }
+
+    it('returns all orders newest first when no filter is given', async () => {
+      const ids = await seed(3);
+
+      expect(await list({})).toEqual({
+        nodes: ids.map((id) => ({ id, state: 'OPEN' })),
+        pageInfo: { endCursor: ids[2], hasNextPage: false },
+      });
+    });
+
+    it('returns an empty connection when no order matches', async () => {
+      await seed(2);
+
+      expect(await list({ filter: { state: 'COMPLETE' } })).toEqual({
+        nodes: [],
+        pageInfo: { endCursor: null, hasNextPage: false },
+      });
+    });
+
+    it('filters by state', async () => {
+      const [open] = await seed(1);
+      const [inProgress] = await seed(1);
+      await prisma.order.update({ where: { id: inProgress }, data: { state: 'IN_PROGRESS' } });
+
+      expect((await list({ filter: { state: 'IN_PROGRESS' } })).nodes).toEqual([
+        { id: inProgress, state: 'IN_PROGRESS' },
+      ]);
+      expect((await list({ filter: { state: 'OPEN' } })).nodes).toEqual([{ id: open, state: 'OPEN' }]);
+    });
+
+    it('pages through 25 orders 10 at a time with no duplicates or gaps', async () => {
+      const ids = await seed(25);
+
+      const first = await list({ first: 10 });
+      const second = await list({ first: 10, after: first.pageInfo.endCursor });
+      const third = await list({ first: 10, after: second.pageInfo.endCursor });
+
+      const pages = [first, second, third];
+      expect(pages.map((page) => page.nodes.length)).toEqual([10, 10, 5]);
+      expect(pages.map((page) => page.pageInfo.hasNextPage)).toEqual([true, true, false]);
+      expect(pages.flatMap((page) => page.nodes.map((node) => node.id))).toEqual(ids);
+    });
+
+    it.each([
+      ['first 0', { first: 0 }, 'first'],
+      ['first above 100', { first: 101 }, 'first'],
+      ['a malformed cursor', { after: 'not-a-cursor' }, 'after'],
+    ])('rejects %s with BAD_USER_INPUT', async (_case, variables, path) => {
+      const res = await gql(LIST_ORDERS, variables);
+
+      expect(res.data).toBeNull();
+      expect(res.errors?.[0]?.extensions).toMatchObject({
+        code: 'BAD_USER_INPUT',
+        fields: [{ path, messages: [expect.any(String)] }],
       });
     });
   });
