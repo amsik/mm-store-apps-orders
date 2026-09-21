@@ -1,17 +1,18 @@
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/coverage/**', '.yarn/**'] },
+  { ignores: ['**/dist/**', '**/coverage/**', '.yarn/**', 'apps/web/src/gql/**'] },
   js.configs.recommended,
   {
     files: ['**/*.js'],
     languageOptions: { globals: globals.node },
   },
   {
-    files: ['**/*.ts'],
+    files: ['**/*.{ts,tsx}'],
     extends: [tseslint.configs.strictTypeChecked, tseslint.configs.stylisticTypeChecked],
     languageOptions: {
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
@@ -20,6 +21,11 @@ export default tseslint.config(
       // Nest modules are intentionally empty classes carrying a decorator.
       '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
     },
+  },
+  {
+    files: ['apps/web/src/**/*.{ts,tsx}'],
+    extends: [reactHooks.configs.flat['recommended-latest']],
+    languageOptions: { globals: globals.browser },
   },
   {
     // Config is read once through ConfigModule and injected as APP_CONFIG; nothing else touches the env.

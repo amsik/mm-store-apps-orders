@@ -193,9 +193,13 @@ via graphql-armor). An incoming safe `x-request-id` is reused. ADR 0006.
 and a "load more" (cursor) button, with loading, error and empty states. CI extended to the web workspace.
 
 **Acceptance criteria:**
-- [ ] With the API running, the list shows the seeded orders; the filter works
-- [ ] An API error is shown as a readable message, not a blank page
-- [ ] Codegen drift fails CI
+→ Outcome: types are generated into `apps/web/src/gql/` and committed (ADR 0007); the `orders` cache policy keys by
+`filter` and appends pages on `after`. No router yet. `VITE_API_URL` (build time) points at the API, whose
+`CORS_ORIGINS` allows the web origin.
+
+- [x] With the API running, the list shows the seeded orders; the filter works
+- [x] An API error is shown as a readable message, not a blank page
+- [x] Codegen drift fails CI
 
 **Verification:** RTL test with `MockedProvider` for list states; manual in the browser.
 **Dependencies:** T6 · **Files:** `apps/web/**` (vite config, `codegen.ts`, `src/App.tsx`, `src/orders/OrdersList.tsx`, `src/apollo.ts`)

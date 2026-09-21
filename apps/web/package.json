@@ -2,5 +2,33 @@
   "name": "@app/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Minimal web client for the orders API (scaffolded in T10)"
+  "description": "Minimal web client for the orders API",
+  "type": "module",
+  "scripts": {
+    "dev": "run -T vite",
+    "build": "run -T vite build",
+    "preview": "run -T vite preview",
+    "typecheck": "run -T tsc -p tsconfig.json",
+    "codegen": "graphql-codegen",
+    "test": "run -T vitest run --project web"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.3.1",
+    "graphql": "^16.11",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^7.4.2",
+    "@graphql-codegen/client-preset": "^6.2.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "^30.1.0"
+  }
 }
