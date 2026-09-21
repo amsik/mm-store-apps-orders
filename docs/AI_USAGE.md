@@ -14,3 +14,13 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
   `@nestjs/graphql` 14, `@nestjs/config` 12, `nestjs-pino` 5); Vitest + SWC instead of Jest.
 - **Validation:** the config tests and the `health` integration test were written first and seen failing
   (RED) before the implementation; manual boot with invalid env to read the error message; `yarn dev` + `curl`.
+
+### T3 — Persistence and integration test harness
+
+- **Delegated:** the Prisma 8 spike, the Prisma schema, `PrismaService`, the Vitest replica-set harness, the compose file and the ADR draft.
+- **Decided or checked by me:** pinned Prisma 6.19.3 after the spike showed Prisma 8 is still an RC with no
+  `@prisma/client@8` published; lazy connection so the API reports `db: DOWN` instead of crashing; `mongo:8.2` in
+  compose after `mongo:8.0` refused to start on Docker Desktop's kernel (SERVER-121912).
+- **Validation:** the `DATABASE_URL` config tests and the `db: UP/DOWN` integration tests were written first and seen
+  failing; manual run of the dev server against compose Mongo, stopping and restarting the container (UP → DOWN → UP);
+  Vitest's `hanging-process` reporter showed no leaked handles.

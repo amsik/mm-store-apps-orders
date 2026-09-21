@@ -2,11 +2,20 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+enum ComponentStatus {
+  DOWN
+  UP
+}
+
 type Health {
+  """Whether MongoDB answers a ping. Only checked when requested."""
+  db: ComponentStatus!
+
+  """Liveness of the API process: `OK` whenever it can answer."""
   status: String!
 }
 
 type Query {
-  """Liveness of the API."""
+  """Liveness of the API and reachability of its dependencies."""
   health: Health!
 }

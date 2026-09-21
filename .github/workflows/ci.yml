@@ -27,7 +27,13 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: yarn
+      # Also runs `prisma generate` through the api workspace's postinstall.
       - run: yarn install --immutable
+      # mongod binary used by the integration tests' in-memory replica set (~100 MB download).
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('apps/api/test/setup/mongo-replset.ts') }}
       - run: yarn lint
       - run: yarn typecheck
       - run: yarn test

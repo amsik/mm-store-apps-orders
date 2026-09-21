@@ -1,22 +1,13 @@
-import swc from 'unplugin-swc';
 import { defineConfig } from 'vitest/config';
+import { swcPlugin } from './vitest.shared.js';
 
-// Nest resolves constructor dependencies from `design:paramtypes` metadata, which esbuild (Vitest's
-// default transformer) does not emit. SWC does, so every API test goes through it.
+// Unit specs sit next to the code and need no database; integration specs live in test/ (vitest.int.config.js).
 export default defineConfig({
-  plugins: [
-    swc.vite({
-      jsc: {
-        parser: { syntax: 'typescript', decorators: true },
-        transform: { legacyDecorator: true, decoratorMetadata: true },
-      },
-    }),
-  ],
+  plugins: [swcPlugin()],
   test: {
     name: 'api',
     root: import.meta.dirname,
-    // Unit specs sit next to the code; integration specs boot the Nest app and live in test/.
-    include: ['src/**/*.spec.ts', 'test/**/*.int-spec.ts'],
+    include: ['src/**/*.spec.ts'],
     env: { LOG_LEVEL: 'silent' },
   },
 });

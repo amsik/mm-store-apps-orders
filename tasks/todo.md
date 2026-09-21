@@ -54,14 +54,15 @@ test → build, plus a PR-title Conventional Commit check). `.nvmrc` (Node 24 LT
 
 ### T3: `feat(api): add prisma mongodb persistence and integration test harness`
 **Description:** **Spike first (≤1h):** Prisma 8 + Mongo against a single-node replica set. If it's blocked, pin 6.19 and record why.
+→ Outcome: Prisma 8 is still an RC with no `@prisma/client@8`, so we pinned **6.19.3** (ADR 0004).
 Add `docker-compose.yml` (mongo with `rs0` init + healthcheck), the Prisma schema (Order with embedded types, Employee), a
 `PrismaService` (global `PrismaModule`, `onModuleInit`/`onModuleDestroy`), and `health` extended with a DB ping. Test harness:
 `MongoMemoryReplSet` global setup + per-test DB reset + a `createTestApp()` helper (Nest `TestingModule` → `INestApplication`). ADR: persistence choice.
 
 **Acceptance criteria:**
-- [ ] `docker compose up -d mongo && yarn workspace @app/api dev` → health reports `db: UP`
-- [ ] `yarn test:int` spins up an in-memory replset, runs, and tears down with no leaked handles
-- [ ] Health reports `db: DOWN` (not a crash) when Mongo is unreachable
+- [x] `docker compose up -d mongo && yarn workspace @app/api dev` → health reports `db: UP`
+- [x] `yarn test:int` spins up an in-memory replset, runs, and tears down with no leaked handles
+- [x] Health reports `db: DOWN` (not a crash) when Mongo is unreachable
 
 **Verification:** integration tests for DB health up/down; CI green including integration tests.
 **Dependencies:** T2 · **Files:** `docker-compose.yml`, `apps/api/prisma/schema.prisma`, `src/core/prisma/*`, `test/setup/*`, `docs/adr/0004`

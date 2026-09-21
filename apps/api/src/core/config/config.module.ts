@@ -16,6 +16,7 @@ import { type AppConfig, type Env, validateEnv } from './app-config.js';
           nodeEnv: env.get('NODE_ENV', { infer: true }),
           port: env.get('PORT', { infer: true }),
           logLevel: env.get('LOG_LEVEL', { infer: true }),
+          databaseUrl: env.get('DATABASE_URL', { infer: true }),
         }),
     },
   ],

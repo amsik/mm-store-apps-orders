@@ -4,6 +4,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  // Prisma on MongoDB needs a replica set: `?replicaSet=rs0&directConnection=true` locally, Atlas SRV in prod.
+  // The custom message keeps the value (which carries credentials) out of the boot error.
+  DATABASE_URL: z
+    .string({ error: 'is required' })
+    .regex(/^mongodb(\+srv)?:\/\//, { error: 'must be a mongodb:// or mongodb+srv:// connection string' }),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -13,6 +18,7 @@ export interface AppConfig {
   readonly nodeEnv: Env['NODE_ENV'];
   readonly port: number;
   readonly logLevel: Env['LOG_LEVEL'];
+  readonly databaseUrl: string;
 }
 
 export class InvalidConfigError extends Error {
