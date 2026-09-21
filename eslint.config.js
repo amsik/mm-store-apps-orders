@@ -16,6 +16,20 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
+    rules: {
+      // Nest modules are intentionally empty classes carrying a decorator.
+      '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
+    },
+  },
+  {
+    // Config is read once through ConfigModule and injected as APP_CONFIG; nothing else touches the env.
+    files: ['apps/api/src/**/*.ts'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        { object: 'process', property: 'env', message: 'Inject APP_CONFIG instead of reading process.env.' },
+      ],
+    },
   },
   prettier,
 );

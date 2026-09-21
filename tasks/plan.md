@@ -35,7 +35,7 @@ written in the same PR that introduces it. ✅ = confirmed with the user on 2026
    No shared package yet: the web app generates its types from the committed `apps/api/schema.gql` through codegen.
    Rationale: one repo gives one CI and atomic cross-stack PRs. Turborepo/Nx would be overkill for 2 apps.
 
-2. **API composition ✅: NestJS 11 as the IoC container + `@nestjs/graphql` with `ApolloDriver` (Apollo Server 5 under the hood), code-first.**
+2. **API composition ✅: NestJS 12 (planned 11; ESM-only, see ADR 0002) as the IoC container + `@nestjs/graphql` with `ApolloDriver` (Apollo Server 5 under the hood), code-first.**
    - Nest's DI container *is* the IoC choice, and Nest modules map directly onto "functional modules".
      The ADR must show we understand what Nest does for us: the module graph, providers, scopes and
      lifecycle hooks, and how the same thing would look with Awilix/Inversify + plain Apollo (the
@@ -214,7 +214,7 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 
 ### Phase 1: Foundation
 - [x] T1 `chore: scaffold yarn monorepo with tooling and CI`
-- [ ] T2 `feat(api): bootstrap nestjs graphql api with config and health check`
+- [x] T2 `feat(api): bootstrap nestjs graphql api with config and health check`
 - [ ] T3 `feat(api): add prisma mongodb persistence and integration test harness`
 
 ### Checkpoint A: Foundation (after T3)
