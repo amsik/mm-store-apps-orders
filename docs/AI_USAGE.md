@@ -24,3 +24,14 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
 - **Validation:** the `DATABASE_URL` config tests and the `db: UP/DOWN` integration tests were written first and seen
   failing; manual run of the dev server against compose Mongo, stopping and restarting the container (UP → DOWN → UP);
   Vitest's `hanging-process` reporter showed no leaked handles.
+
+### T4 — Order state machine
+
+- **Delegated:** the domain module (`OrderState`, transition table, `assertTransition`, typed errors), its tests,
+  the coverage and ESLint guards, and the ADR draft.
+- **Decided or checked by me:** a const object instead of a TS `enum` so the type is interchangeable with Prisma's;
+  the sequence is checked before the employee rule; employee existence stays out of the domain (needs I/O, handled in T8);
+  required CI status checks added to `main` protection at Checkpoint A, after the checkpoint run showed they were missing.
+- **Validation:** the spec was written first and seen failing (RED); all 9 `from × to` pairs are generated rather than
+  hand-listed; the 100% domain coverage threshold and the no-framework-imports rule were each checked by deliberately
+  breaking them (an uncovered function, a `@nestjs/common` import) and seeing `yarn test:cov` and `eslint` fail.
