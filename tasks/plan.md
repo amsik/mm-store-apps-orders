@@ -152,6 +152,9 @@ written in the same PR that introduces it. ✅ = confirmed with the user on 2026
 14. **Git workflow.** `main` is protected: PR required, CI required, squash merge. Branches are named
     `feat/…`, `chore/…`, `ci/…`, `docs/…`, and the PR title is a Conventional Commit (it becomes the
     squash commit). Enforced by commitlint (husky `commit-msg`) + a PR-title check in CI.
+    Commits and PR descriptions carry **no attribution trailers/footers** (`Co-Authored-By:`, "Generated with …"
+    and the like): commitlint rejects such trailers and the CI PR check rejects them in the PR body. AI usage is
+    disclosed in `AI_USAGE.md` instead.
 
 15. **Deploy ✅: GCP Cloud Run (scale-to-zero, cold start accepted) + MongoDB Atlas M0 in the same region.**
     - **Two Cloud Run services:** `orders-api` (NestJS image) and `orders-web` (static build on nginx image). Region

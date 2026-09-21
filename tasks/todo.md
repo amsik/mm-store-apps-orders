@@ -5,6 +5,8 @@ Conventions for every task:
   **Context → Problem → Solution → Outcome/Verification**.
 - CI green (lint, typecheck, test, build) before merge. No `@ts-ignore`, skipped tests or lowered thresholds.
 - ADR added in the same PR when the task introduces a decision.
+- No attribution trailers or footers in commits or PRs: no `Co-Authored-By:`, `Signed-off-by:` for tools,
+  "Generated with …" lines or similar. AI usage is documented in `AI_USAGE.md` only.
 
 Commands (after T1): `yarn lint`, `yarn typecheck`, `yarn test`, `yarn build`, `yarn workspace @app/api test:int`.
 Stack: NestJS 11 (IoC + modules) · `@nestjs/graphql` + ApolloDriver (code-first) · Prisma + MongoDB · class-validator · nestjs-pino.
@@ -28,6 +30,7 @@ test → build, plus a PR-title Conventional Commit check). `.nvmrc` (Node 24 LT
 **Acceptance criteria:**
 - [ ] `yarn install && yarn lint && yarn typecheck && yarn test && yarn build` pass from a clean clone
 - [ ] A non-conventional commit message is rejected locally; a bad PR title fails CI
+- [ ] A commit message with a `Co-Authored-By:` trailer is rejected by commitlint; a PR body with `Co-Authored-By` / "Generated with" fails CI
 - [ ] CI runs on the PR and is green
 
 **Verification:** CI run link on the PR; local clean-clone run.
