@@ -1,0 +1,54 @@
+// Prisma 6.19 is pinned: Prisma 7 dropped MongoDB and Prisma 8 is still a release candidate (see ADR 0004).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderState {
+  OPEN
+  IN_PROGRESS
+  COMPLETE
+}
+
+/// An order is one aggregate, so everything it owns is embedded and a transition is a single-document update.
+model Order {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  state            OrderState        @default(OPEN)
+  customer         Customer
+  lineItems        LineItem[]
+  assignedEmployee EmployeeSnapshot?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@map("orders")
+}
+
+type Customer {
+  name  String
+  email String
+}
+
+type LineItem {
+  sku            String
+  name           String
+  quantity       Int
+  unitPriceCents Int
+}
+
+/// Copy of the employee at assignment time, so the order stays readable even if the employee record changes.
+type EmployeeSnapshot {
+  id   String @db.ObjectId
+  name String
+}
+
+model Employee {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  @@map("employees")
+}

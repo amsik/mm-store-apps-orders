@@ -78,7 +78,7 @@ written in the same PR that introduces it. ✅ = confirmed with the user on 2026
    `graphql/` (object/input types + resolvers). Cross-cutting pieces live in `src/core/{config,prisma,errors,logging}`.
    This is lightweight hexagonal: the state machine is testable without `TestingModule` or mocks.
 
-4. **Persistence: MongoDB + Prisma (v8 if the T3 spike passes, otherwise pin v6.19).**
+4. **Persistence: MongoDB + Prisma (v8 if the T3 spike passes, otherwise pin v6.19).** → **6.19.3 pinned** (spike: Prisma 8 is still an RC, see ADR 0004).
    - Prisma 7 dropped MongoDB, and support is back in Prisma 8 ([docs](https://www.prisma.io/docs/prisma-orm/quickstart/mongodb)).
      Because of that, T3 starts with a time-boxed spike. Fallback: v6.19, which is stable for Mongo.
    - Prisma on Mongo **requires a replica set**. We run a single-node `rs0` in docker-compose, use
@@ -215,7 +215,7 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 ### Phase 1: Foundation
 - [x] T1 `chore: scaffold yarn monorepo with tooling and CI`
 - [x] T2 `feat(api): bootstrap nestjs graphql api with config and health check`
-- [ ] T3 `feat(api): add prisma mongodb persistence and integration test harness`
+- [x] T3 `feat(api): add prisma mongodb persistence and integration test harness`
 
 ### Checkpoint A: Foundation (after T3)
 

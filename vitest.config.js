@@ -5,6 +5,7 @@ export default defineConfig({
     projects: [
       { test: { name: 'scripts', include: ['scripts/**/*.test.js'] } },
       'apps/*/vitest.config.{js,ts}',
+      'apps/*/vitest.int.config.{js,ts}',
     ],
   },
 });
