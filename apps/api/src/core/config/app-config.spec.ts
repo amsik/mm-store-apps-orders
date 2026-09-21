@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InvalidConfigError, validateEnv } from './app-config.js';
 
-const DATABASE_URL = 'mongodb://localhost:27017/orders?replicaSet=rs0&directConnection=true';
+const DATABASE_URL = 'mongodb://localhost:27017/mm-order?replicaSet=rs0&directConnection=true';
 
 describe('validateEnv', () => {
   it('applies defaults when optional variables are missing', () => {
