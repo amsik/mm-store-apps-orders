@@ -10,6 +10,7 @@ import { APP_CONFIG } from './core/di/tokens.js';
 import { AppErrorFilter } from './core/errors/app-error.filter.js';
 import { LoggingModule } from './core/logging/logging.module.js';
 import { PrismaModule } from './core/prisma/prisma.module.js';
+import { EmployeesModule } from './modules/employees/employees.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { OrdersModule } from './modules/orders/orders.module.js';
 
@@ -33,6 +34,7 @@ const SCHEMA_FILE = join(import.meta.dirname, '..', 'schema.gql');
       }),
     }),
     HealthModule,
+    EmployeesModule,
     OrdersModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AppErrorFilter }],

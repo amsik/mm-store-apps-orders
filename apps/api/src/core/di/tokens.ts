@@ -5,3 +5,5 @@
 export const APP_CONFIG = Symbol('APP_CONFIG');
 export const CLOCK = Symbol('CLOCK');
 export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');
+export const EMPLOYEE_REPOSITORY = Symbol('EMPLOYEE_REPOSITORY');
+export const EMPLOYEE_DIRECTORY = Symbol('EMPLOYEE_DIRECTORY');

@@ -27,6 +27,12 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""A store employee who can be assigned to orders."""
+type Employee {
+  id: ID!
+  name: String!
+}
+
 type Health {
   """Whether MongoDB answers a ping. Only checked when requested."""
   db: ComponentStatus!
@@ -92,6 +98,9 @@ type PageInfo {
 }
 
 type Query {
+  """All employees sorted by name, e.g. to pick who starts an order."""
+  employees: [Employee!]!
+
   """Liveness of the API and reachability of its dependencies."""
   health: Health!
 
