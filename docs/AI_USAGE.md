@@ -88,3 +88,40 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
   rule threw a 500 until it was set to report through the validation context. A manual run of the built API with
   `NODE_ENV=production` and an unreachable database checked a masked `INTERNAL_SERVER_ERROR`, the echoed request id, a log
   line with `requestId`, `req.id` and the Prisma stack, rejected introspection, and a 413 for a 150 kB body.
+
+### T10 — Web scaffold and orders list
+
+- **Delegated:** the Vite/React workspace, Apollo Client setup, codegen config, the orders list (state filter, "Load
+  more", loading/error/empty states), the RTL tests and the CI drift check.
+- **Decided or checked by me:** types are generated from the committed SDL and committed too, so a breaking schema change
+  fails the web typecheck in the same PR (ADR 0007); the `orders` cache policy keys by `filter` only and appends pages on
+  `after`; no router and no UI kit yet; the API URL is a build-time `VITE_API_URL`, relying on the API's CORS allow-list.
+- **Validation:** the list and formatting tests were written first and seen failing (RED); the tests use the real
+  `createCache()`, so the pagination merge is covered. Manual run in Chrome against the built API and compose Mongo:
+  seeded orders listed, "Load more" went from 20 to 40 rows, the COMPLETE filter showed only complete orders, and with
+  the API stopped the page showed "Could not load orders: Failed to fetch" with a Retry button instead of a blank page.
+
+### T11 — Order details and state transitions
+
+- **Delegated:** the details screen (customer, items, total, employee, history), the Start/Complete actions, the hash
+  router and the RTL tests.
+- **Decided or checked by me:** only the next valid action is rendered, but the server stays the authority: a rejected
+  transition shows the server's message and refetches the order; hash routes instead of a router library (ADR 0007); the
+  list switched to `cache-and-network` so it reflects transitions made on the details screen.
+- **Validation:** the details and route specs were written first and seen failing (RED). Manual run in Chrome against the
+  built API: a seeded order was started with an employee and updated in place; the order was then completed with `curl`
+  behind the UI's back, and clicking Complete showed "COMPLETE is final" and switched the view to COMPLETE with no
+  actions; the list showed the new state. Starting an order stored before T8 (no `version`) was rejected and the view
+  stayed OPEN, which is the legacy-data case already documented in ADR 0005.
+
+### T12 — Create-order form and E2E tests
+
+- **Delegated:** the create-order form (customer, dynamic line items, live total), its validation and server-error
+  mapping, the Playwright config and specs, and the CI E2E job.
+- **Decided or checked by me:** client rules mirror the API's and use the same dotted field paths, so server
+  `BAD_USER_INPUT` details land on the same inputs; the client email check is deliberately looser than the API's, which
+  keeps the API the authority and gives the E2E a real server-side validation case; E2E runs the _built_ API in production
+  mode against a separate database; locally it runs in the installed Chrome instead of downloading Chromium.
+- **Validation:** the form logic and component specs were written first and seen failing (RED). The E2E specs passed
+  against the full local stack; to prove the validation spec checks something, the server-error mapping was broken on
+  purpose and the spec failed, then the code was restored.

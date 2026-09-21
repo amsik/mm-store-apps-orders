@@ -193,9 +193,13 @@ via graphql-armor). An incoming safe `x-request-id` is reused. ADR 0006.
 and a "load more" (cursor) button, with loading, error and empty states. CI extended to the web workspace.
 
 **Acceptance criteria:**
-- [ ] With the API running, the list shows the seeded orders; the filter works
-- [ ] An API error is shown as a readable message, not a blank page
-- [ ] Codegen drift fails CI
+→ Outcome: types are generated into `apps/web/src/gql/` and committed (ADR 0007); the `orders` cache policy keys by
+`filter` and appends pages on `after`. No router yet. `VITE_API_URL` (build time) points at the API, whose
+`CORS_ORIGINS` allows the web origin.
+
+- [x] With the API running, the list shows the seeded orders; the filter works
+- [x] An API error is shown as a readable message, not a blank page
+- [x] Codegen drift fails CI
 
 **Verification:** RTL test with `MockedProvider` for list states; manual in the browser.
 **Dependencies:** T6 · **Files:** `apps/web/**` (vite config, `codegen.ts`, `src/App.tsx`, `src/orders/OrdersList.tsx`, `src/apollo.ts`)
@@ -206,9 +210,13 @@ and a "load more" (cursor) button, with loading, error and empty states. CI exte
 ("Start" with an employee picker, "Complete"). Server errors (e.g. a race) are displayed and the data refetched.
 
 **Acceptance criteria:**
-- [ ] Start requires picking an employee; after success the state and employee update without a reload
-- [ ] COMPLETE orders show no actions
-- [ ] A server-rejected transition shows the error message and the view reflects the true server state
+→ Outcome: hash routes (`#/orders/:id`, ADR 0007); the details query also loads `employees`, which serve both the picker
+and the names in the history. The mutation returns the same `OrderDetails` fragment, so the normalized cache updates
+the screen; on a rejection the order is refetched.
+
+- [x] Start requires picking an employee; after success the state and employee update without a reload
+- [x] COMPLETE orders show no actions
+- [x] A server-rejected transition shows the error message and the view reflects the true server state
 
 **Verification:** RTL tests for action visibility per state; manual.
 **Dependencies:** T8, T10 · **Scope:** M
@@ -218,9 +226,14 @@ and a "load more" (cursor) button, with loading, error and empty states. CI exte
 Playwright E2E against the full stack in CI (compose Mongo + seed + api + web preview).
 
 **Acceptance criteria:**
-- [ ] E2E: create order → appears in the list → start with an employee → complete → no actions left
-- [ ] E2E: server-side validation error is shown in the form
-- [ ] The E2E job runs in CI and is green
+→ Outcome: `yarn e2e` (root `playwright.config.ts`) builds and starts the API (production mode, port 3100) and the web
+preview (4173), seeds a separate `mm-order-e2e` database, and needs compose Mongo (`E2E_DATABASE_URL` overrides the
+URL, `E2E_BROWSER_CHANNEL=chrome` uses a local Chrome). The client email check is looser than the API's on purpose, and
+the E2E validation case relies on that (`ada@example`).
+
+- [x] E2E: create order → appears in the list → start with an employee → complete → no actions left
+- [x] E2E: server-side validation error is shown in the form
+- [x] The E2E job runs in CI and is green
 
 **Verification:** `yarn e2e` locally and in CI.
 **Dependencies:** T11 · **Files:** `apps/web/src/orders/CreateOrderForm.tsx`, `e2e/*.spec.ts`, `playwright.config.ts`, `.github/workflows/ci.yml`

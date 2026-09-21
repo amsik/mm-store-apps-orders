@@ -221,8 +221,8 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 
 ### Phase 2: Core domain + API
 - [x] T4 `feat(orders): implement order state machine domain`
-- [ ] T5 `feat(orders): create order and get order details`
-- [ ] T6 `feat(orders): list orders with state filter and cursor pagination`
+- [x] T5 `feat(orders): create order and get order details`
+- [x] T6 `feat(orders): list orders with state filter and cursor pagination`
 - [x] T7 `feat(employees): add employees module with seed data`
 - [x] T8 `feat(orders): transition orders through graphql mutation`
 - [x] T9 `feat(api): harden error handling, input limits and request logging`
@@ -230,9 +230,9 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 ### Checkpoint B: API complete (after T9)
 
 ### Phase 3: Minimal frontend
-- [ ] T10 `feat(web): scaffold web app with orders list`
-- [ ] T11 `feat(web): order details with state transitions`
-- [ ] T12 `feat(web): create order form and e2e tests`
+- [x] T10 `feat(web): scaffold web app with orders list`
+- [x] T11 `feat(web): order details with state transitions`
+- [x] T12 `feat(web): create order form and e2e tests`
 
 ### Checkpoint C: Full stack (after T12)
 
