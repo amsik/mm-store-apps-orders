@@ -3,7 +3,7 @@ import { Inject, Injectable, type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, assert, beforeAll, describe, expect, it } from 'vitest';
 import { SEED_EMPLOYEES, seed } from '../prisma/seed.js';
 import { AppConfigModule } from '../src/core/config/config.module.js';
 import { EMPLOYEE_DIRECTORY, EMPLOYEE_REPOSITORY } from '../src/core/di/tokens.js';
@@ -51,6 +51,7 @@ describe('employees (integration)', () => {
       await seed(prisma);
       const directory = app.get<EmployeeDirectory>(EMPLOYEE_DIRECTORY);
       const [employee] = SEED_EMPLOYEES;
+      assert(employee);
 
       expect(await directory.getById(employee.id)).toEqual(employee);
     });

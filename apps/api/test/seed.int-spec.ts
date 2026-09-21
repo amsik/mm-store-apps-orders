@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, assert, describe, expect, it } from 'vitest';
 import { SEED_EMPLOYEES, SEED_ORDERS, seed } from '../prisma/seed.js';
 import { testDatabaseUrl } from './setup/database.js';
 
@@ -30,6 +30,7 @@ describe('seed (integration)', () => {
   it('leaves orders that already exist untouched', async () => {
     await seed(prisma);
     const [order] = SEED_ORDERS;
+    assert(order);
     await prisma.order.update({ where: { id: order.id }, data: { state: 'IN_PROGRESS' } });
 
     await seed(prisma);

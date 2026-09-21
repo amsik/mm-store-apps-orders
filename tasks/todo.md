@@ -127,7 +127,8 @@ sorted newest first, `first` capped at 100, index `{ state: 1, _id: -1 }`.
 (`EmployeesModule` exports the service; `OrdersModule` imports the module, never the repository). An idempotent seed script (`yarn seed`) with ~5 employees and sample orders.
 → Outcome: `EmployeesService` is exported only as `EMPLOYEE_DIRECTORY` (`useExisting`); `OrdersModule` imports
 `EmployeesModule` now and T8 injects the token. The seed inserts missing records by fixed id (never overwrites demo
-state), runs through Node's type stripping (`node prisma/seed.ts`), and seeds OPEN orders only until T8 adds `history`.
+state), runs through Node's type stripping (`node prisma/seed.ts`), and loads 18 employees and 80 OPEN orders
+(deterministic, generated from fixed customer/product lists, enough for several pages) until T8 adds `history`.
 
 **Acceptance criteria:**
 - [x] `employees` returns the seeded list; running the seed twice produces no duplicates
