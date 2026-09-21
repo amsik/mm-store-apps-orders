@@ -5,4 +5,6 @@ export const ErrorCode = {
   INVALID_TRANSITION: 'INVALID_TRANSITION',
   EMPLOYEE_REQUIRED: 'EMPLOYEE_REQUIRED',
   CONCURRENT_MODIFICATION: 'CONCURRENT_MODIFICATION',
+  /** Anything unexpected. The message is masked in production; `extensions.requestId` points to the log entry. */
+  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 } as const;

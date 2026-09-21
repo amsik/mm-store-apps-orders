@@ -18,6 +18,7 @@
   "dependencies": {
     "@apollo/server": "^5",
     "@as-integrations/express5": "^1.1.2",
+    "@escape.tech/graphql-armor-max-depth": "^2.4.2",
     "@nestjs/apollo": "^14",
     "@nestjs/common": "^12",
     "@nestjs/config": "^12",

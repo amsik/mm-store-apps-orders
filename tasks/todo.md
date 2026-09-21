@@ -162,11 +162,17 @@ Local data seeded before T8 lacks `version` and needs a reset (ADR 0005).
 **Description:** Central error mapping (Apollo `formatError` + a domain-error → `GraphQLError` mapper): domain/app errors → stable codes,
 unknown → masked `INTERNAL_SERVER_ERROR` in production with a `requestId`. `requestId` via nestjs-pino `genReqId` (echoed in `x-request-id`),
 query depth limit (`validationRules`), body size limit, CORS from config, introspection/playground toggled by config.
+→ Outcome: `OrdersErrorFilter` stays in the orders feature (core must not import it, and the domain must not import
+core), with a global `@Catch()` `AppErrorFilter` behind it: GraphQL errors pass through, `NotFoundError` → `NOT_FOUND`,
+anything else → `INTERNAL_SERVER_ERROR` + `requestId`, logged and masked in production. Non-GraphQL (HTTP) errors go to
+Nest's `BaseExceptionFilter`, which the 413 test showed is required. `formatError` masks errors raised outside
+resolvers. New config: `CORS_ORIGINS`, `GRAPHQL_INTROSPECTION` (also toggles GraphiQL), `GRAPHQL_MAX_DEPTH` (default 8,
+via graphql-armor). An incoming safe `x-request-id` is reused. ADR 0006.
 
 **Acceptance criteria:**
-- [ ] A thrown unexpected error returns no stack or message in `NODE_ENV=production`, and the log contains it together with the `requestId`
-- [ ] A query exceeding the max depth is rejected before execution
-- [ ] Every error code in the catalog is covered by at least one test
+- [x] A thrown unexpected error returns no stack or message in `NODE_ENV=production`, and the log contains it together with the `requestId`
+- [x] A query exceeding the max depth is rejected before execution
+- [x] Every error code in the catalog is covered by at least one test
 
 **Verification:** integration tests for the error mapping and limits; manual check of log output.
 **Dependencies:** T8 · **Files:** `src/core/errors/*`, `src/app.module.ts`, `src/core/logging/*`, tests

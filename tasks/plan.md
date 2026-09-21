@@ -225,7 +225,7 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 - [ ] T6 `feat(orders): list orders with state filter and cursor pagination`
 - [x] T7 `feat(employees): add employees module with seed data`
 - [x] T8 `feat(orders): transition orders through graphql mutation`
-- [ ] T9 `feat(api): harden error handling, input limits and request logging`
+- [x] T9 `feat(api): harden error handling, input limits and request logging`
 
 ### Checkpoint B: API complete (after T9)
 

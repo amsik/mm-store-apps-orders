@@ -73,3 +73,18 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
   condition, which made both concurrent starts succeed and failed the test every time; a manual run of the built API
   against compose Mongo walked every path and surfaced that orders stored before `version` existed can never
   transition (documented in ADR 0005 with the reset steps).
+
+### T9 — Error handling, request ids and API limits
+
+- **Delegated:** the catch-all `AppErrorFilter`, the `formatError` backstop, `x-request-id` generation, the new config
+  keys (`CORS_ORIGINS`, `GRAPHQL_INTROSPECTION`, `GRAPHQL_MAX_DEPTH`), wiring of the depth rule, body limit and CORS, and the tests.
+- **Decided or checked by me:** `OrdersErrorFilter` stays in the orders feature instead of being folded into core, since
+  core would have to import the orders domain (ADR 0006). An incoming `x-request-id` is reused only when it matches a safe
+  pattern. Introspection and GraphiQL share one switch that defaults to off in production. graphql-armor was chosen over
+  the unmaintained `graphql-depth-limit`.
+- **Validation:** unit and integration specs were written first and seen failing (RED). The 413 test hung instead of
+  failing, which exposed a real bug: Nest routes HTTP-level errors to the global `@Catch()` filter, which answered with a
+  GraphQL error and never wrote a response. It is fixed by delegating non-GraphQL hosts to `BaseExceptionFilter`. The depth
+  rule threw a 500 until it was set to report through the validation context. A manual run of the built API with
+  `NODE_ENV=production` and an unreachable database checked a masked `INTERNAL_SERVER_ERROR`, the echoed request id, a log
+  line with `requestId`, `req.id` and the Prisma stack, rejected introspection, and a 413 for a 150 kB body.
