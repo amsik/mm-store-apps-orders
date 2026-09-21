@@ -113,3 +113,15 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
   behind the UI's back, and clicking Complete showed "COMPLETE is final" and switched the view to COMPLETE with no
   actions; the list showed the new state. Starting an order stored before T8 (no `version`) was rejected and the view
   stayed OPEN, which is the legacy-data case already documented in ADR 0005.
+
+### T12 — Create-order form and E2E tests
+
+- **Delegated:** the create-order form (customer, dynamic line items, live total), its validation and server-error
+  mapping, the Playwright config and specs, and the CI E2E job.
+- **Decided or checked by me:** client rules mirror the API's and use the same dotted field paths, so server
+  `BAD_USER_INPUT` details land on the same inputs; the client email check is deliberately looser than the API's, which
+  keeps the API the authority and gives the E2E a real server-side validation case; E2E runs the _built_ API in production
+  mode against a separate database; locally it runs in the installed Chrome instead of downloading Chromium.
+- **Validation:** the form logic and component specs were written first and seen failing (RED). The E2E specs passed
+  against the full local stack; to prove the validation spec checks something, the server-error mapping was broken on
+  purpose and the spec failed, then the code was restored.

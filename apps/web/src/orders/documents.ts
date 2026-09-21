@@ -78,3 +78,11 @@ graphql(`
     }
   }
 `);
+
+export const CREATE_ORDER_MUTATION = graphql(`
+  mutation CreateOrder($input: CreateOrderInput!) {
+    createOrder(input: $input) {
+      ...OrderDetails
+    }
+  }
+`);

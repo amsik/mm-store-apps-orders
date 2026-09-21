@@ -11,3 +11,9 @@ describe('parseRoute', () => {
     expect(parseRoute(hash)).toEqual(route);
   });
 });
+
+describe('parseRoute — new order', () => {
+  it('maps #/new to the create screen', () => {
+    expect(parseRoute('#/new')).toEqual({ name: 'new' });
+  });
+});

@@ -226,9 +226,14 @@ the screen; on a rejection the order is refetched.
 Playwright E2E against the full stack in CI (compose Mongo + seed + api + web preview).
 
 **Acceptance criteria:**
-- [ ] E2E: create order → appears in the list → start with an employee → complete → no actions left
-- [ ] E2E: server-side validation error is shown in the form
-- [ ] The E2E job runs in CI and is green
+→ Outcome: `yarn e2e` (root `playwright.config.ts`) builds and starts the API (production mode, port 3100) and the web
+preview (4173), seeds a separate `mm-order-e2e` database, and needs compose Mongo (`E2E_DATABASE_URL` overrides the
+URL, `E2E_BROWSER_CHANNEL=chrome` uses a local Chrome). The client email check is looser than the API's on purpose, and
+the E2E validation case relies on that (`ada@example`).
+
+- [x] E2E: create order → appears in the list → start with an employee → complete → no actions left
+- [x] E2E: server-side validation error is shown in the form
+- [x] The E2E job runs in CI and is green
 
 **Verification:** `yarn e2e` locally and in CI.
 **Dependencies:** T11 · **Files:** `apps/web/src/orders/CreateOrderForm.tsx`, `e2e/*.spec.ts`, `playwright.config.ts`, `.github/workflows/ci.yml`

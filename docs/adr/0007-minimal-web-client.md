@@ -25,8 +25,14 @@ with the API.
   that breaks the web app therefore fails `typecheck` in the same PR.
 - The API URL comes from `VITE_API_URL` at build time (default `http://localhost:3000/graphql`). The API allows the
   web origin through `CORS_ORIGINS` (ADR 0006), so no dev proxy is needed.
+- The create-order form validates on the client with the **same rules and the same field paths** as the API
+  (`customer.email`, `lineItems.0.quantity`), so a `BAD_USER_INPUT` from the server lands on the same fields as a
+  client-side error. The client checks are a convenience; the API stays the authority (its email check is stricter).
+  Prices are typed in euros and sent as integer cents.
 - Tests: Vitest + jsdom + React Testing Library with Apollo's `MockedProvider`, using the real cache policy from
-  `createCache()`, so pagination merging is tested too. Full-stack behaviour is covered by Playwright (T12).
+  `createCache()`, so pagination merging is tested too. **Playwright** runs the full stack (built API + built web app +
+  MongoDB replica set from docker-compose, in a separate `mm-order-e2e` database) locally and as its own CI job.
+  Locally, `E2E_BROWSER_CHANNEL=chrome` uses the installed Chrome instead of downloading Playwright's Chromium.
 
 ## Alternatives
 
