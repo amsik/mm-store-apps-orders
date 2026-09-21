@@ -1,14 +1,17 @@
 import { join } from 'node:path';
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ClockModule } from './core/clock/clock.module.js';
 import type { AppConfig } from './core/config/app-config.js';
 import { AppConfigModule } from './core/config/config.module.js';
 import { APP_CONFIG } from './core/di/tokens.js';
+import { AppErrorFilter } from './core/errors/app-error.filter.js';
 import { LoggingModule } from './core/logging/logging.module.js';
 import { PrismaModule } from './core/prisma/prisma.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { OrdersModule } from './modules/orders/orders.module.js';
 
 // Resolves to apps/api/schema.gql from both src/ (dev, tests) and dist/ (build).
 const SCHEMA_FILE = join(import.meta.dirname, '..', 'schema.gql');
@@ -30,6 +33,8 @@ const SCHEMA_FILE = join(import.meta.dirname, '..', 'schema.gql');
       }),
     }),
     HealthModule,
+    OrdersModule,
   ],
+  providers: [{ provide: APP_FILTER, useClass: AppErrorFilter }],
 })
 export class AppModule {}

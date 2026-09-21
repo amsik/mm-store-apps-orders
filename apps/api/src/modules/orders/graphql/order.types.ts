@@ -1,0 +1,52 @@
+import { Field, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { OrderState } from '../domain/order-state.js';
+
+registerEnumType(OrderState, {
+  name: 'OrderState',
+  description: 'OPEN → IN_PROGRESS → COMPLETE, no skipping or reverting.',
+});
+
+@ObjectType()
+export class Customer {
+  @Field()
+  name!: string;
+
+  @Field()
+  email!: string;
+}
+
+@ObjectType()
+export class LineItem {
+  @Field()
+  sku!: string;
+
+  @Field()
+  name!: string;
+
+  @Field(() => Int)
+  quantity!: number;
+
+  @Field(() => Int, { description: 'Price of one unit in cents.' })
+  unitPriceCents!: number;
+}
+
+@ObjectType()
+export class Order {
+  @Field(() => ID)
+  id!: string;
+
+  @Field(() => OrderState)
+  state!: OrderState;
+
+  @Field(() => Customer)
+  customer!: Customer;
+
+  @Field(() => [LineItem])
+  lineItems!: LineItem[];
+
+  @Field()
+  createdAt!: Date;
+
+  @Field()
+  updatedAt!: Date;
+}
