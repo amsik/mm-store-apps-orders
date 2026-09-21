@@ -59,5 +59,23 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Application services depend on ports (repository interfaces bound to DI tokens), never on the database client.
+    files: ['apps/api/src/modules/*/application/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@prisma/*', '**/core/prisma/**', '**/infrastructure/**', '**/graphql/**'],
+              message:
+                'The application layer depends on ports, not on Prisma, adapters or the GraphQL layer.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
 );

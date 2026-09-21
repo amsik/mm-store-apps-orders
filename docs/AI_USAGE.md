@@ -35,3 +35,16 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
 - **Validation:** the spec was written first and seen failing (RED); all 9 `from × to` pairs are generated rather than
   hand-listed; the 100% domain coverage threshold and the no-framework-imports rule were each checked by deliberately
   breaking them (an uncovered function, a `@nestjs/common` import) and seeing `yarn test:cov` and `eslint` fail.
+
+### T5 — Create order and get order details
+
+- **Delegated:** the order read model, the repository port and its Prisma and in-memory adapters, the GraphQL types,
+  inputs and resolver, the validation → `BAD_USER_INPUT` and `NotFoundError` → `NOT_FOUND` mapping, and the tests.
+- **Decided or checked by me:** errors carry stable codes from day one (a `ValidationPipe` exception factory with
+  per-field paths, plus a GraphQL exception filter for `NotFoundError`), and T9 builds the full catalog on top; the
+  `Employee` type waits for T8 instead of shipping a field that is always `null`; a new ESLint rule stops
+  `application/` from importing Prisma, adapters or the GraphQL layer.
+- **Validation:** the service, input-validator and GraphQL integration specs were written first and seen failing (RED);
+  the new lint rule was checked with a deliberate Prisma import in `application/`; a manual run of the built API
+  against compose Mongo (create → get, unknown id, malformed id). That run hit a local Homebrew `mongod` holding
+  `127.0.0.1:27017` first, and `MONGO_PORT=27018` got around it.

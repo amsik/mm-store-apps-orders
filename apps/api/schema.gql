@@ -7,6 +7,26 @@ enum ComponentStatus {
   UP
 }
 
+input CreateOrderInput {
+  customer: CustomerInput!
+  lineItems: [LineItemInput!]!
+}
+
+type Customer {
+  email: String!
+  name: String!
+}
+
+input CustomerInput {
+  email: String!
+  name: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type Health {
   """Whether MongoDB answers a ping. Only checked when requested."""
   db: ComponentStatus!
@@ -15,7 +35,49 @@ type Health {
   status: String!
 }
 
+type LineItem {
+  name: String!
+  quantity: Int!
+  sku: String!
+
+  """Price of one unit in cents."""
+  unitPriceCents: Int!
+}
+
+input LineItemInput {
+  name: String!
+  quantity: Int!
+  sku: String!
+
+  """Price of one unit in cents."""
+  unitPriceCents: Int!
+}
+
+type Mutation {
+  """Creates an order in state OPEN, with no employee assigned."""
+  createOrder(input: CreateOrderInput!): Order!
+}
+
+type Order {
+  createdAt: DateTime!
+  customer: Customer!
+  id: ID!
+  lineItems: [LineItem!]!
+  state: OrderState!
+  updatedAt: DateTime!
+}
+
+"""OPEN → IN_PROGRESS → COMPLETE, no skipping or reverting."""
+enum OrderState {
+  COMPLETE
+  IN_PROGRESS
+  OPEN
+}
+
 type Query {
   """Liveness of the API and reachability of its dependencies."""
   health: Health!
+
+  """One order by id. Fails with NOT_FOUND if it does not exist."""
+  order(id: ID!): Order!
 }

@@ -4,3 +4,4 @@
  */
 export const APP_CONFIG = Symbol('APP_CONFIG');
 export const CLOCK = Symbol('CLOCK');
+export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');

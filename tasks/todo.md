@@ -96,12 +96,14 @@ No framework imports. ADR: state-machine design + transition API shape.
 `createOrder(input)` mutation (always created in `OPEN`, no employee), and the `order(id)` query. class-validator on input classes
 (customer name/email, ≥1 line item, integer quantity > 0, integer `unitPriceCents` ≥ 0, max lengths). Repository interface +
 `ORDER_REPOSITORY` token in application, Prisma implementation bound in `OrdersModule`. `createdAt`/`updatedAt` managed by Prisma.
+→ Outcome: the `Employee` GraphQL type and `assignedEmployee` field were left for T8, when an order can first have one
+(always `null` until then). `OrdersService` needs no `CLOCK` yet (Prisma sets the timestamps); T8 adds it for `history.at`.
 
 **Acceptance criteria:**
-- [ ] `createOrder` returns an order in state `OPEN` with timestamps, customer and line items; `order(id)` returns the same
-- [ ] Invalid input (empty items, qty 0, negative price, bad email) → `BAD_USER_INPUT` with field details; nothing persisted
-- [ ] `order(id)` with an unknown or malformed id → `NOT_FOUND` / `BAD_USER_INPUT` (never a 500)
-- [ ] `OrdersService` depends only on the `ORDER_REPOSITORY` and `CLOCK` tokens (no Prisma import in application/domain); unit tests build it with `InMemoryOrderRepository` and no container
+- [x] `createOrder` returns an order in state `OPEN` with timestamps, customer and line items; `order(id)` returns the same
+- [x] Invalid input (empty items, qty 0, negative price, bad email) → `BAD_USER_INPUT` with field details; nothing persisted
+- [x] `order(id)` with an unknown or malformed id → `NOT_FOUND` / `BAD_USER_INPUT` (never a 500)
+- [x] `OrdersService` depends only on the `ORDER_REPOSITORY` and `CLOCK` tokens (no Prisma import in application/domain); unit tests build it with `InMemoryOrderRepository` and no container
 
 **Verification:** integration tests via the GraphQL layer against the memory replset; unit tests for the input validators and the `OrdersService` (with an in-memory fake repository).
 **Dependencies:** T3 · **Files:** `orders/orders.module.ts`, `orders/graphql/{order.types.ts,order.inputs.ts,orders.resolver.ts}`, `orders/application/{orders.service.ts,order.repository.ts}`, `orders/infrastructure/prisma-order.repository.ts`, tests
