@@ -213,7 +213,7 @@ T16 final docs (continuous; closes at the end)
 The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). **One task = one branch = one PR.**
 
 ### Phase 1: Foundation
-- [ ] T1 `chore: scaffold yarn monorepo with tooling and CI`
+- [x] T1 `chore: scaffold yarn monorepo with tooling and CI`
 - [ ] T2 `feat(api): bootstrap nestjs graphql api with config and health check`
 - [ ] T3 `feat(api): add prisma mongodb persistence and integration test harness`
 
