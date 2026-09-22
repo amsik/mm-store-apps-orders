@@ -23,11 +23,13 @@ variable "atlas_org_id" {
 variable "atlas_region" {
   description = <<-EOT
     MongoDB Atlas GCP region name for the M0 cluster. Must be the same physical region as
-    gcp_region (Atlas names it differently, e.g. europe-west1 -> EUROPE_WEST_1) — confirm the
-    exact mapping against Atlas's current supported region list before the first apply.
+    gcp_region. Atlas's GCP naming isn't a mechanical uppercase-and-underscore of the GCP region:
+    europe-west1 (Belgium) is "WESTERN_EUROPE", while europe-west2/3/4 do follow the pattern
+    (EUROPE_WEST_2, ...). See https://www.mongodb.com/docs/atlas/reference/google-gcp/ for the
+    full mapping if gcp_region is changed from the default.
   EOT
   type        = string
-  default     = "EUROPE_WEST_1"
+  default     = "WESTERN_EUROPE"
 }
 
 variable "db_name" {

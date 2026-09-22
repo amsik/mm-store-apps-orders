@@ -78,10 +78,13 @@ without live credentials.
 - `terraform apply` has not been run. Until it is, there is no live Cloud Run URL, no live Atlas cluster,
   and T15 (the deploy workflow) and the cold-start measurement it calls for cannot start. This ADR's status
   will move to "Accepted, applied" once that happens.
-- `var.atlas_region` needs to match `var.gcp_region` under Atlas's own GCP region naming (e.g.
-  `europe-west1` → `EUROPE_WEST_1`); that mapping should be double-checked against Atlas's current
-  supported region list right before the first `apply`, since it can only be verified against the live
-  API, not `terraform validate`.
+- `var.atlas_region` needs to match `var.gcp_region` under Atlas's own GCP region naming, which is not a
+  mechanical transform: the first real `apply` failed with `INVALID_ATTRIBUTE` on `regionName` because
+  the original default, `EUROPE_WEST_1`, doesn't exist — Atlas calls `europe-west1` (Belgium)
+  `WESTERN_EUROPE` (fixed; `europe-west2`/`3`/`4` do follow the `EUROPE_WEST_N` pattern). Changing
+  `gcp_region` away from the default needs the matching lookup at
+  https://www.mongodb.com/docs/atlas/reference/google-gcp/, since only the live API can confirm it, not
+  `terraform validate`.
 - The deploy workflow (T15) must build the `orders-web` image with `VITE_API_URL` pointing at
   `orders-api`'s Cloud Run URL (a Terraform output). That means the API is deployed first, its URL is read
   from Terraform output or `gcloud run services describe`, and only then is the web image built — an

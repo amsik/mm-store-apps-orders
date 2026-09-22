@@ -74,8 +74,11 @@ as a PR comment when `infra/**` changes, is left for once real credentials exist
 
 ## Notes
 
-- `var.atlas_region` must be Atlas's name for the same physical region as `var.gcp_region` (e.g.
-  `europe-west1` → `EUROPE_WEST_1`); double-check that mapping against Atlas's current supported region
-  list before the first apply, since only the live API can confirm it, not `terraform validate`.
+- `var.atlas_region` must be Atlas's name for the same physical region as `var.gcp_region`. Atlas's GCP
+  naming isn't always a mechanical transform: `europe-west1` (Belgium, the default) is `WESTERN_EUROPE`,
+  not `EUROPE_WEST_1` — that wrong guess is exactly what failed on the first real `apply` (INVALID_ATTRIBUTE
+  on `regionName`). If you change `gcp_region`, look up the matching Atlas name at
+  https://www.mongodb.com/docs/atlas/reference/google-gcp/ first; `terraform validate` can't catch this,
+  only the live API can.
 - `terraform destroy` removes the Atlas cluster and project along with everything else here — treat it
   with the same care as any other irreversible database operation.
