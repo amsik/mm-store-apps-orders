@@ -11,4 +11,4 @@ Each ADR follows Context → Decision → Alternatives → Consequences.
 | 0005 | [Order state machine and transition API](0005-order-state-machine.md)                              | Accepted |
 | 0006 | [Error handling, request ids and API limits](0006-error-handling-and-api-limits.md)                | Accepted |
 | 0007 | [Minimal web client: Vite, React, Apollo Client and committed codegen](0007-minimal-web-client.md) | Accepted |
-| 0008 | [Deploy: GCP Cloud Run + MongoDB Atlas, provisioned with Terraform](0008-deploy-gcp-cloud-run-terraform.md) | Infra code only, not yet applied |
+| 0008 | [Deploy: GCP Cloud Run + MongoDB Atlas, provisioned with Terraform](0008-deploy-gcp-cloud-run-terraform.md) | Accepted, applied |

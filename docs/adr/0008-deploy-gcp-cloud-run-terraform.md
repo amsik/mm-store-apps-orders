@@ -1,6 +1,6 @@
 # 0008 — Deploy: GCP Cloud Run + MongoDB Atlas, provisioned with Terraform
 
-**Status:** Accepted, infrastructure code only — not yet applied (2026-09-22)
+**Status:** Accepted, applied (2026-09-22, GCP project `mediamarkt-challange`)
 
 ## Context
 
@@ -11,11 +11,20 @@ Workload Identity Federation (no long-lived JSON keys). T14 turns that decision 
 
 Provisioning real cloud infrastructure needs a real GCP project (with billing enabled) and a real Atlas
 organization — decisions that belong to whoever owns the account, not to whoever is writing the Terraform.
-This task was scoped with the user to **write and validate the Terraform, but not run `terraform apply`**;
-that step waits for a GCP project id and an Atlas organization id to be supplied, and can happen in a
-follow-up once they are. `terraform fmt -check` and `terraform validate` (against the real provider
-schemas, downloaded locally) are the verification that stands in for tests here — there is no `plan`
-without live credentials.
+This task was scoped with the user to **write and validate the Terraform first, apply separately** once a
+GCP project id (`mediamarkt-challange`) and an Atlas organization id were supplied.
+
+`terraform fmt -check` and `terraform validate` (against the real provider schemas, downloaded locally)
+were the pre-apply verification. The first two `apply` attempts against real credentials then surfaced two
+issues no amount of offline validation could have caught, both fixed in follow-up commits on the same PR:
+1. `atlas_region` default `EUROPE_WEST_1` doesn't exist — Atlas's GCP region naming isn't a mechanical
+   transform (`europe-west1`/Belgium is `WESTERN_EUROPE`; only `europe-west2`/`3`/`4` follow the
+   `EUROPE_WEST_N` pattern, which is presumably what the wrong default was modeled on).
+2. `orders-api`'s explicit `PORT` env var is rejected by Cloud Run — it's a reserved name the platform
+   sets itself from `containers.ports.container_port`.
+
+Both are now documented inline in the Terraform and in `infra/README.md`, and `terraform apply` has since
+run clean, with a second `terraform plan` confirming no drift.
 
 ## Decision
 
@@ -75,9 +84,8 @@ without live credentials.
 
 ## Consequences
 
-- `terraform apply` has not been run. Until it is, there is no live Cloud Run URL, no live Atlas cluster,
-  and T15 (the deploy workflow) and the cold-start measurement it calls for cannot start. This ADR's status
-  will move to "Accepted, applied" once that happens.
+- Applied: live Cloud Run URLs and an Atlas cluster now exist (placeholder image on both services). T15
+  (the deploy workflow) and its cold-start measurement can start.
 - `var.atlas_region` needs to match `var.gcp_region` under Atlas's own GCP region naming, which is not a
   mechanical transform: the first real `apply` failed with `INVALID_ATTRIBUTE` on `regionName` because
   the original default, `EUROPE_WEST_1`, doesn't exist — Atlas calls `europe-west1` (Belgium)
