@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+**/build
+coverage
+test-results
+playwright-report
+.git
+.github
+.vscode
+.yarn
+*.log
+.env
+.env.*
+!.env.example

@@ -75,6 +75,25 @@ jobs:
             test-results/
           retention-days: 7
 
+  docker:
+    name: docker (build & healthcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Builds api/seed/web from their Dockerfiles, starts the full stack, and waits for every
+      # service's healthcheck (the one-shot `seed` container satisfies `--wait` on exiting 0).
+      - run: docker compose up --build -d --wait
+      - run: docker compose ps
+      - name: API answers a GraphQL query through the container
+        run: |
+          curl -sf -X POST http://localhost:3000/graphql \
+            -H 'content-type: application/json' \
+            -d '{"query":"{ health { status db } }"}'
+      - if: always()
+        run: docker compose logs
+      - if: always()
+        run: docker compose down -v
+
   pr-conventions:
     name: PR title & body
     if: github.event_name == 'pull_request'

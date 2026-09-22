@@ -25,5 +25,49 @@ services:
       start_period: 10s
       retries: 20
 
+  # One-shot: inserts the demo employees and orders (idempotent, fixed ids) and exits. `api`
+  # waits for it, so a plain `docker compose up` always has data to demo against.
+  seed:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ['node', 'apps/api/prisma/seed.ts']
+    environment:
+      DATABASE_URL: mongodb://mongo:27017/mm-order?replicaSet=rs0&directConnection=true
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      # Override with API_PORT; keep WEB_PORT's VITE_API_URL build arg in sync if you do.
+      - '${API_PORT:-3000}:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      LOG_LEVEL: info
+      DATABASE_URL: mongodb://mongo:27017/mm-order?replicaSet=rs0&directConnection=true
+      CORS_ORIGINS: http://localhost:${WEB_PORT:-8080}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked in at build time: the browser calls the API on its host-mapped port directly.
+        VITE_API_URL: http://localhost:${API_PORT:-3000}/graphql
+    ports:
+      - '${WEB_PORT:-8080}:8080'
+    depends_on:
+      - api
+
 volumes:
   mongo-data:
