@@ -66,7 +66,7 @@ export async function smokeTest(
   { fetch: fetchImpl = globalThis.fetch, sleep = defaultSleep, retries = 10, delayMs = 3000 } = {},
 ) {
   await waitForHealthy(url, { fetchImpl, retries, delayMs, sleep });
-  await query(url, '{ orders(first: 1) { edges { node { id } } } }', fetchImpl);
+  await query(url, '{ orders(first: 1) { nodes { id } pageInfo { hasNextPage } } }', fetchImpl);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
