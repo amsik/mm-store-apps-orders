@@ -17,6 +17,7 @@ GCP project id (`mediamarkt-challange`) and an Atlas organization id were suppli
 `terraform fmt -check` and `terraform validate` (against the real provider schemas, downloaded locally)
 were the pre-apply verification. The first two `apply` attempts against real credentials then surfaced two
 issues no amount of offline validation could have caught, both fixed in follow-up commits on the same PR:
+
 1. `atlas_region` default `EUROPE_WEST_1` doesn't exist — Atlas's GCP region naming isn't a mechanical
    transform (`europe-west1`/Belgium is `WESTERN_EUROPE`; only `europe-west2`/`3`/`4` follow the
    `EUROPE_WEST_N` pattern, which is presumably what the wrong default was modeled on).
@@ -52,7 +53,7 @@ run clean, with a second `terraform plan` confirming no drift.
   connection string plus a Terraform-generated `random_password` (32 chars, alphanumeric only — a
   connection-string password with special characters would need percent-encoding, so the character set is
   restricted instead) for a dedicated `orders-api` database user scoped to `roles { role_name = "readWrite"
-  database_name = var.db_name }` — read/write on the app's one database, nothing else in the project.
+database_name = var.db_name }` — read/write on the app's one database, nothing else in the project.
 - **Atlas M0 (free tier)** via `mongodbatlas_advanced_cluster` with `provider_name = "TENANT"` and
   `backing_provider_name = "GCP"`. The older `mongodbatlas_cluster` resource still exists in provider
   v2.18 but is the one being phased out in favor of `advanced_cluster`, which is also where new features
