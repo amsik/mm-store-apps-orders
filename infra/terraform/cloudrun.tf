@@ -30,10 +30,7 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "NODE_ENV"
         value = "production"
       }
-      env {
-        name  = "PORT"
-        value = "3000"
-      }
+      # No PORT here: Cloud Run reserves it and sets it itself from `ports.container_port` above.
       env {
         name  = "LOG_LEVEL"
         value = "info"
