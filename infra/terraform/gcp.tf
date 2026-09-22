@@ -1,3 +1,7 @@
+data "google_project" "this" {
+  project_id = var.gcp_project_id
+}
+
 locals {
   gcp_services = [
     "run.googleapis.com",

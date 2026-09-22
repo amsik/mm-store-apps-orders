@@ -174,3 +174,14 @@ apply` is a deliberate manual step (ADR 0008), the fix sat committed but un-appl
      ran `terraform apply` and re-ran the `Deploy` workflow, which then went green end to end. After that, a live
      GraphQL smoke run (`createOrder` → `transitionOrder(IN_PROGRESS)` → `transitionOrder(COMPLETE)`) against the
      production API confirmed the whole path, not just the health check.
+
+### T17 — CORS fix: allow-list both Cloud Run hostnames
+
+- **Delegated:** diagnosing a live CORS preflight failure reported from the browser (calls from
+  `orders-web-229951342886...` to `orders-api` blocked with no `Access-Control-Allow-Origin`), and the Terraform fix.
+- **Decided or checked by me:** confirmed live, via `gcloud run services describe`, that `CORS_ORIGINS` only held
+  the legacy hash-based `orders-web` hostname, and via `curl` that Cloud Run serves the same service on both that
+  hostname and a project-number-based one — the second is what the browser had loaded from. Chose to allow-list
+  both in Terraform rather than redirect one to the other, since neither hostname is otherwise privileged.
+- **Validation:** `terraform fmt`/`validate` pass; `apply` stays a deliberate manual step (ADR 0008) — pending,
+  to be run and confirmed live (repeat the blocked request) before merge.

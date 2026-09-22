@@ -45,9 +45,15 @@ resource "google_cloud_run_v2_service" "api" {
       }
       env {
         # The web service's own URL, known only once it exists — the two services form one
-        # direction of dependency (api -> web), never the reverse.
-        name  = "CORS_ORIGINS"
-        value = google_cloud_run_v2_service.web.uri
+        # direction of dependency (api -> web), never the reverse. Cloud Run serves every
+        # service on two equivalent hostnames (this legacy hash-based one, plus a
+        # project-number-based one below); both need to be allow-listed since either can end
+        # up as the browser's origin.
+        name = "CORS_ORIGINS"
+        value = join(",", [
+          google_cloud_run_v2_service.web.uri,
+          "https://orders-web-${data.google_project.this.number}.${var.gcp_region}.run.app",
+        ])
       }
       env {
         name = "DATABASE_URL"
