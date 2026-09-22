@@ -98,5 +98,16 @@ database_name = var.db_name }` — read/write on the app's one database, nothing
   `orders-api`'s Cloud Run URL (a Terraform output). That means the API is deployed first, its URL is read
   from Terraform output or `gcloud run services describe`, and only then is the web image built — an
   ordering constraint T15 has to encode explicitly.
-- Cold-start time (NestJS + Prisma boot) has not been measured yet; that's also deferred to T15, once a
-  revision actually exists to measure.
+- Cold-start time (NestJS + Prisma boot), measured by T15's deploy workflow as wall-clock time from
+  "canary revision deployed" to "canary passes its smoke test": **~0.6s** on the first real deploy
+  (`orders-api-00003-bac`) — fast enough that `min-instances=1` isn't needed for the demo.
+- A third issue only the live deploy workflow (T15), not `terraform apply`/`plan`, caught: `orders-web`'s
+  `google_cloud_run_v2_service` had no explicit `template.service_account`, so Cloud Run fell back to the
+  project's default compute engine service account. `orders-deploy`'s `iam.serviceAccountUser` grant is
+  scoped to `orders-runtime` only (by design, see Decision), so `gcloud run deploy orders-web` failed with
+  `PERMISSION_DENIED` on that first real deploy — `orders-api` deployed fine since it already had
+  `service_account = google_service_account.runtime.email`. Fixed by setting the same on `orders-web`:
+  both Cloud Run services now run as `orders-runtime`, which is a strict narrowing versus the default
+  compute SA's usual broad project-level `roles/editor`, not a widening. `terraform plan` couldn't have
+  caught this without live credentials against the real project, since the default SA's existence and the
+  IAM grant's scope are both facts about the live account, not the HCL.
