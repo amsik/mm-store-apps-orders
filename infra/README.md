@@ -6,9 +6,9 @@ Actions Workload Identity Federation, and an Atlas project with an M0 cluster. S
 [`docs/adr/0008-deploy-gcp-cloud-run-terraform.md`](../docs/adr/0008-deploy-gcp-cloud-run-terraform.md) for
 why it's shaped this way.
 
-**Status:** the Terraform in this directory is written and passes `terraform fmt -check` +
-`terraform validate`, but has **not been applied**. Doing so needs a real GCP project (with billing) and a
-real MongoDB Atlas organization, which only the account owner can supply — see the ADR's Context section.
+**Status:** applied, against GCP project `mediamarkt-challange` — see [`docs/adr/0008`](../docs/adr/0008-deploy-gcp-cloud-run-terraform.md)
+for when and what that first `apply` caught. Both Cloud Run services and the Atlas cluster exist; the
+deploy workflow (T15, [`docs/deploy.md`](../docs/deploy.md)) is what pushes real images to them.
 
 ## Prerequisites
 
