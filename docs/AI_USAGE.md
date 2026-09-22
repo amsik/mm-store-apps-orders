@@ -125,3 +125,52 @@ Every AI-written change goes through a PR, CI (lint, typecheck, tests, build) an
 - **Validation:** the form logic and component specs were written first and seen failing (RED). The E2E specs passed
   against the full local stack; to prove the validation spec checks something, the server-error mapping was broken on
   purpose and the spec failed, then the code was restored.
+
+### T13 — Dockerize API and web, full-stack compose
+
+- **Delegated:** both multi-stage Dockerfiles, the `docker-compose.yml` (mongo + one-shot `seed` + `api` + `web`), and
+  the CI `docker` job.
+- **Decided or checked by me:** `mongo:8.2` rather than the Atlas-matching `8.0` in compose, since `8.0.x` crashes at
+  startup on Docker Desktop VMs with kernel ≥ 6.19 (`SERVER-121912`) — integration tests keep `8.0` through
+  `mongodb-memory-server`, so the mismatch is isolated to local compose; a one-shot `seed` service so
+  `docker compose up` always has demo data without a manual step; `API_PORT`/`WEB_PORT` overrides, with `web`'s
+  `VITE_API_URL` build arg tracked to `API_PORT` since Vite bakes it in at image build time, not at container start.
+- **Validation:** `docker compose up --build` run from a clean state against `docker compose ps` showing all three
+  services healthy; the CI `docker` job runs the same command with `--wait` then fires a real GraphQL query at the
+  running container, which caught a real ordering bug (the API started before Mongo's replica set finished
+  initiating) fixed by the `seed` service's `depends_on: condition: service_healthy` chain.
+
+### T14 — Terraform: GCP and Atlas infrastructure
+
+- **Delegated:** the full `infra/terraform` module (`google` + `mongodbatlas` + `random` providers, GCS backend),
+  `infra/README.md`, and the ADR draft.
+- **Decided or checked by me:** scoped the plan to _write and validate_ Terraform first and apply separately, once a
+  real GCP project (`mediamarkt-challange`) and an Atlas organization existed to apply against, rather than guessing
+  at project/org ids; chose `mongodbatlas_advanced_cluster` over the older `mongodbatlas_cluster` since the latter is
+  being phased out, even though it meant more unfamiliar HCL (list-of-objects attributes instead of nested blocks).
+- **Validation:** `terraform fmt -check` and `validate` pass in CI with no cloud credentials (checked by opening a PR
+  with a deliberately malformed `.tf` file and watching the job fail, then reverting it). The real `apply`, run with
+  me at the keyboard, needed two live-only fixes offline validation couldn't have caught: Atlas's `WESTERN_EUROPE`
+  region name for `europe-west1` (not the mechanical `EUROPE_WEST_1` guess), and Cloud Run rejecting an explicit
+  `PORT` env var as reserved. Both fixed, then a second `apply` and `plan` showed no drift — recorded in ADR 0008.
+
+### T15 — Deploy pipeline to Cloud Run
+
+- **Delegated:** `.github/workflows/deploy.yml` (OIDC auth, build/push, no-traffic deploy, canary smoke test, traffic
+  shift), `scripts/smoke-test.js`, and `docs/deploy.md`.
+- **Decided or checked by me:** smoke-test the tagged canary revision _before_ it gets any traffic rather than after,
+  so a bad image never serves a single real request; build the web image against `orders-api`'s stable URL (not the
+  canary tag) so it starts working the instant traffic shifts, without a second web deploy.
+- **Validation:** the first real run against the live project surfaced two bugs no amount of local review had caught,
+  both fixed and re-verified live rather than assumed fixed from reading the diff:
+  1. The smoke test queried `orders { id }` against the actual schema's `OrderConnection` (`orders { edges { node { id } } }`),
+     failing CI's `docker` job and the live smoke test identically — fixed in `2cc081e` and confirmed by re-running
+     both.
+  2. `orders-web`'s Cloud Run service had no explicit `template.service_account` in Terraform, so it fell back to the
+     project's default compute SA, which the deploy SA has no `iam.serviceAccountUser` grant on (that grant is scoped
+     to `orders-runtime` only, by design) — `gcloud run deploy orders-web` failed with `PERMISSION_DENIED`. Fixed in
+     `1a025d4` by setting the same `orders-runtime` SA Terraform already used for `orders-api`; since `terraform
+apply` is a deliberate manual step (ADR 0008), the fix sat committed but un-applied until a follow-up session
+     ran `terraform apply` and re-ran the `Deploy` workflow, which then went green end to end. After that, a live
+     GraphQL smoke run (`createOrder` → `transitionOrder(IN_PROGRESS)` → `transitionOrder(COMPLETE)`) against the
+     production API confirmed the whole path, not just the health check.

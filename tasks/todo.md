@@ -299,10 +299,10 @@ build and push both images tagged with the commit SHA → `gcloud run deploy --n
 smoke test the `health` query and one `orders` query against the revision URL → `update-traffic --to-latest`.
 
 **Acceptance criteria:**
-- [ ] The public web URL works end to end against Atlas (create → start → complete) after a cold start
-- [ ] Deploy runs automatically after merge; a failing smoke test fails the pipeline and traffic stays on the previous revision
-- [ ] No keys or secrets in the repo or GitHub secrets; `.env.example` documents every variable
-- [ ] Cold-start time measured and written in the ADR
+- [x] The public web URL works end to end against Atlas (create → start → complete) after a cold start
+- [x] Deploy runs automatically after merge; a failing smoke test fails the pipeline and traffic stays on the previous revision
+- [x] No keys or secrets in the repo or GitHub secrets; `.env.example` documents every variable
+- [x] Cold-start time measured and written in the ADR
 
 **Verification:** live demo run on the prod URL after scale-to-zero; CI deploy logs; `gcloud run revisions list`.
 **Dependencies:** T14 · **Files:** `.github/workflows/deploy.yml`, `docs/deploy.md`
@@ -315,13 +315,13 @@ indexes, read replicas, sharding key, outbox/events and where Temporal would fit
 and link the ADR index and the demo script.
 
 **Acceptance criteria:**
-- [ ] Someone new can run the app from the README alone (verified by following it in a fresh clone)
-- [ ] Each ADR has Context/Decision/Alternatives/Consequences
-- [ ] AI_USAGE covers tools, why, and how output was validated, with concrete examples from the PRs
+- [x] Someone new can run the app from the README alone (verified by following it in a fresh clone)
+- [x] Each ADR has Context/Decision/Alternatives/Consequences
+- [x] AI_USAGE covers tools, why, and how output was validated, with concrete examples from the PRs
 
 **Dependencies:** all · **Scope:** S
 
 ### ✅ Checkpoint D — Submission ready
-- [ ] Fresh clone → README steps → everything works (local + docker + Cloud Run)
+- [x] Fresh clone → README steps → everything works (local + docker + Cloud Run)
 - [ ] All PRs merged with conventional titles; CI green on `main`
 - [ ] Rehearse the demo + answers: why this architecture, alternatives, trade-offs, scaling, AI usage
