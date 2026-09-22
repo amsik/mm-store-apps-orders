@@ -78,6 +78,15 @@ resource "google_cloud_run_v2_service" "web" {
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
+    # Without this, Cloud Run falls back to the project's default compute engine service
+    # account, which `orders-deploy` has no `actAs` grant on (iam.tf scopes that grant to
+    # `orders-runtime` specifically) — `gcloud run deploy orders-web` then fails with
+    # PERMISSION_DENIED. Reusing `orders-runtime` here still means every non-default identity
+    # in this project is one of exactly two, least-privilege, never-shared service accounts;
+    # nginx never reads the one secret `orders-runtime` can access, so this is a plain
+    # narrowing versus the default compute SA's usual broad project-level `roles/editor`.
+    service_account = google_service_account.runtime.email
+
     scaling {
       min_instance_count = 0
       max_instance_count = var.cloud_run_max_instances
