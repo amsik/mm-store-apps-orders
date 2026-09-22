@@ -237,7 +237,7 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 ### Checkpoint C: Full stack (after T12)
 
 ### Phase 4: Ship
-- [ ] T13 `build: dockerize api and web with full-stack compose`
+- [x] T13 `build: dockerize api and web with full-stack compose`
 - [ ] T14 `feat(infra): provision gcp and atlas with terraform`
 - [ ] T15 `ci: deploy to gcp cloud run on merge to main`
 - [ ] T16 `docs: readme, architecture decisions and AI usage`

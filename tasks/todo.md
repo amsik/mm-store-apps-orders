@@ -250,10 +250,20 @@ the E2E validation case relies on that (`ada@example`).
 ### T13: `build: dockerize api and web with full-stack compose`
 **Description:** Multi-stage Dockerfiles (non-root user, prod deps only, healthcheck). The API image includes the Prisma engines.
 `docker compose up` → Mongo rs + seed + api + web. CI builds the images.
+→ Outcome: `apps/api/Dockerfile` installs `openssl` in both the build and runtime stages (same libssl at
+`prisma generate` time and run time, or the query engine binary mismatches); the production-only stage
+strips `@app/api`'s `postinstall` before `yarn workspaces focus --production` (that install has no `prisma`
+CLI to run it) and the already-generated `.prisma` client is copied in from the dev-deps build stage
+instead. `apps/web/Dockerfile` serves the Vite build from `nginxinc/nginx-unprivileged` (non-root by
+default); its healthcheck uses `127.0.0.1`, not `localhost` — nginx binds IPv4 only and busybox `wget`
+tries `::1` first. `docker-compose.yml` adds a one-shot `seed` service (`service_completed_successfully`
+gates `api`) so a plain `docker compose up` always has demo data; `API_PORT`/`WEB_PORT` override the host
+ports, and `web`'s `VITE_API_URL` build arg tracks `API_PORT` since it's baked in at image build time. CI
+gets a `docker` job: `docker compose up --build -d --wait`, then a GraphQL query against the running API.
 
 **Acceptance criteria:**
-- [ ] From a clean clone, `docker compose up --build` gives a working app on documented ports
-- [ ] Images build in CI; the API container reports healthy
+- [x] From a clean clone, `docker compose up --build` gives a working app on documented ports
+- [x] Images build in CI; the API container reports healthy
 
 **Verification:** clean-clone run; `docker compose ps` shows healthy.
 **Dependencies:** T9, T12 · **Scope:** S
