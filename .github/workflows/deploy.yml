@@ -1,0 +1,139 @@
+name: Deploy
+
+# Fires once CI has gone green on main, rather than duplicating CI's checks here (`needs: ci`
+# across workflow files isn't a thing GitHub Actions supports; `workflow_run` is the equivalent).
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+
+# id-token: write is what lets google-github-actions/auth exchange this run's OIDC token for
+# short-lived GCP credentials via Workload Identity Federation — no service-account key involved.
+permissions:
+  contents: read
+  id-token: write
+
+# One deploy at a time; a second push landing mid-deploy waits rather than racing traffic updates.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: mediamarkt-challange
+  REGION: europe-west1
+  REPOSITORY: orders
+
+jobs:
+  deploy:
+    name: build, deploy (no traffic), smoke test, shift traffic
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOY_SA_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Resolve build metadata
+        id: meta
+        run: |
+          echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          echo "tag=sha-${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
+
+      # orders-api's stable per-service URL never changes between deploys (Cloud Run keeps it
+      # pinned to whichever revision currently holds 100% traffic), so the web image can be built
+      # against it before the new api revision even exists — it starts serving the same hostname
+      # the moment traffic shifts, below.
+      - name: Resolve orders-api's stable URL
+        id: api-stable
+        run: |
+          echo "url=$(gcloud run services describe orders-api --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push orders-api image
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/orders-api:${{ steps.meta.outputs.sha }}"
+          docker build -f apps/api/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "API_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy orders-api (no traffic)
+        run: |
+          gcloud run deploy orders-api \
+            --image "$API_IMAGE" \
+            --region "$REGION" \
+            --no-traffic \
+            --tag "${{ steps.meta.outputs.tag }}" \
+            --quiet
+
+      - name: Resolve orders-api's tagged (canary) URL
+        id: api-canary
+        run: |
+          URL=$(gcloud run services describe orders-api --region "$REGION" --format=json \
+            | jq -er --arg tag "${{ steps.meta.outputs.tag }}" '.status.traffic[] | select(.tag == $tag) | .url')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test orders-api (canary revision, before it gets any traffic)
+        id: api-smoke
+        run: |
+          START=$(date +%s)
+          node scripts/smoke-test.js "${{ steps.api-canary.outputs.url }}/graphql"
+          echo "cold_start_seconds=$(( $(date +%s) - START ))" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push orders-web image
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/orders-web:${{ steps.meta.outputs.sha }}"
+          docker build -f apps/web/Dockerfile \
+            --build-arg VITE_API_URL="${{ steps.api-stable.outputs.url }}/graphql" \
+            -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "WEB_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy orders-web (no traffic)
+        run: |
+          gcloud run deploy orders-web \
+            --image "$WEB_IMAGE" \
+            --region "$REGION" \
+            --no-traffic \
+            --tag "${{ steps.meta.outputs.tag }}" \
+            --quiet
+
+      - name: Resolve orders-web's tagged (canary) URL
+        id: web-canary
+        run: |
+          URL=$(gcloud run services describe orders-web --region "$REGION" --format=json \
+            | jq -er --arg tag "${{ steps.meta.outputs.tag }}" '.status.traffic[] | select(.tag == $tag) | .url')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      # No GraphQL to check here, just that nginx serves the SPA shell — the smoke test above
+      # already proved the API it points at is healthy.
+      - name: Smoke test orders-web (canary revision)
+        run: curl -sf "${{ steps.web-canary.outputs.url }}/" >/dev/null
+
+      # Only reached once both canaries pass their smoke test — everything above this line leaves
+      # production traffic exactly where it was, so a failure here never touches the live site.
+      - name: Shift production traffic to the new revisions
+        run: |
+          gcloud run services update-traffic orders-api --region "$REGION" --to-latest --quiet
+          gcloud run services update-traffic orders-web --region "$REGION" --to-latest --quiet
+
+      - name: Summary
+        run: |
+          {
+            echo "### Deployed \`${{ steps.meta.outputs.sha }}\`"
+            echo "- orders-api cold start (canary, until healthy): ${{ steps.api-smoke.outputs.cold_start_seconds }}s"
+            echo "- ${{ steps.api-stable.outputs.url }}"
+            echo "- $(gcloud run services describe orders-web --region "$REGION" --format='value(status.url)')"
+          } >> "$GITHUB_STEP_SUMMARY"
