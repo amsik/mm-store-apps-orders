@@ -37,7 +37,7 @@ resource "google_cloud_run_v2_service" "api" {
       }
       env {
         name  = "GRAPHQL_INTROSPECTION"
-        value = "false"
+        value = "true"
       }
       env {
         name  = "GRAPHQL_MAX_DEPTH"
