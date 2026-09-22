@@ -238,9 +238,9 @@ The full checklist with acceptance criteria is in [`tasks/todo.md`](./todo.md). 
 
 ### Phase 4: Ship
 - [x] T13 `build: dockerize api and web with full-stack compose`
-- [ ] T14 `feat(infra): provision gcp and atlas with terraform`
-- [ ] T15 `ci: deploy to gcp cloud run on merge to main`
-- [ ] T16 `docs: readme, architecture decisions and AI usage`
+- [x] T14 `feat(infra): provision gcp and atlas with terraform`
+- [x] T15 `ci: deploy to gcp cloud run on merge to main`
+- [x] T16 `docs: readme, architecture decisions and AI usage`
 
 ### Checkpoint D: Submission ready
 
