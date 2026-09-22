@@ -1,0 +1,158 @@
+# Demo script for GraphiQL (http://localhost:3000/graphql) or Apollo Sandbox.
+#
+# Run the operations top to bottom. Variables, set in the Variables panel as you go:
+#   { "orderId": "<id from CreateOrder>", "employeeId": "<id from Employees>" }
+#
+# Local setup: `docker compose up -d mongo && yarn workspace @app/api seed && yarn workspace @app/api dev`.
+
+# 1. The API is up and MongoDB answers.
+query Health {
+  health {
+    status
+    db
+  }
+}
+
+# 2. Who can work on an order: copy one id into `employeeId`.
+query Employees {
+  employees {
+    id
+    name
+  }
+}
+
+# 3. A new order always starts OPEN with no employee: copy its id into `orderId`.
+mutation CreateOrder {
+  createOrder(
+    input: {
+      customer: { name: "Ada Lovelace", email: "ada@example.com" }
+      lineItems: [
+        { sku: "TV-55", name: "OLED TV 55\"", quantity: 1, unitPriceCents: 129900 }
+        { sku: "HDMI-2", name: "HDMI cable", quantity: 2, unitPriceCents: 1250 }
+      ]
+    }
+  ) {
+    id
+    state
+    assignedEmployee {
+      name
+    }
+    createdAt
+  }
+}
+
+# 4. Newest first, filtered by state, 5 per page (pass `pageInfo.endCursor` as `after` for the next page).
+query OpenOrders {
+  orders(filter: { state: OPEN }, first: 5) {
+    nodes {
+      id
+      customer {
+        name
+      }
+      createdAt
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+# 5. Rejected: skipping a state → INVALID_TRANSITION (extensions.from / extensions.to).
+mutation SkipToComplete($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: COMPLETE }) {
+    state
+  }
+}
+
+# 6. Rejected: IN_PROGRESS needs an employee → EMPLOYEE_REQUIRED.
+mutation StartWithoutEmployee($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: IN_PROGRESS }) {
+    state
+  }
+}
+
+# 7. OPEN → IN_PROGRESS with an employee.
+mutation StartOrder($orderId: ID!, $employeeId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: IN_PROGRESS, employeeId: $employeeId }) {
+    state
+    assignedEmployee {
+      name
+    }
+    updatedAt
+  }
+}
+
+# 8. Rejected: going back → INVALID_TRANSITION.
+mutation RevertToOpen($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: OPEN }) {
+    state
+  }
+}
+
+# 9. IN_PROGRESS → COMPLETE (the employee stays assigned).
+mutation CompleteOrder($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: COMPLETE }) {
+    state
+    assignedEmployee {
+      name
+    }
+  }
+}
+
+# 10. Rejected: COMPLETE is final → INVALID_TRANSITION. Run CompleteOrder again to see it.
+
+# 11. The full record, with one history entry per transition.
+query OrderDetails($orderId: ID!) {
+  order(id: $orderId) {
+    id
+    state
+    customer {
+      name
+      email
+    }
+    lineItems {
+      sku
+      name
+      quantity
+      unitPriceCents
+    }
+    assignedEmployee {
+      id
+      name
+    }
+    history {
+      from
+      to
+      at
+      employeeId
+    }
+    createdAt
+    updatedAt
+  }
+}
+
+# 12. Rejected: invalid input → BAD_USER_INPUT with every offending field in extensions.fields.
+mutation InvalidOrder {
+  createOrder(
+    input: {
+      customer: { name: "", email: "not-an-email" }
+      lineItems: [{ sku: "X", name: "Broken", quantity: 0, unitPriceCents: -1 }]
+    }
+  ) {
+    id
+  }
+}
+
+# 13. Rejected: unknown order → NOT_FOUND; a malformed id → BAD_USER_INPUT.
+query UnknownOrder {
+  missing: order(id: "000000000000000000000000") {
+    id
+  }
+}
+
+query MalformedOrderId {
+  order(id: "nope") {
+    id
+  }
+}
