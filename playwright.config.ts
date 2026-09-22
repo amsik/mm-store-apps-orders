@@ -8,7 +8,7 @@ const CI = Boolean(process.env.CI);
 
 export const E2E_DATABASE_URL =
   process.env.E2E_DATABASE_URL ??
-  'mongodb://localhost:27017/mm-order-e2e?replicaSet=rs0&directConnection=true';
+  'mongodb://localhost:27018/mm-order-e2e?replicaSet=rs0&directConnection=true';
 
 export default defineConfig({
   testDir: 'e2e',
