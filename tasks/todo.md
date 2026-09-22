@@ -179,10 +179,10 @@ via graphql-armor). An incoming safe `x-request-id` is reused. ADR 0006.
 **Scope:** M
 
 ### ✅ Checkpoint B — API complete
-- [ ] All requirement rows in plan.md "traceability" for the backend are green
-- [ ] Demo script runnable in Apollo Sandbox (`docs/demo.graphql`): create → list → start → complete → illegal attempts
-- [ ] API coverage ≥ 90% on domain/application
-- [ ] Review with the user (also a good moment for a subagent code review + `/code-review`)
+- [x] All requirement rows in plan.md "traceability" for the backend are green
+- [x] Demo script runnable in Apollo Sandbox (`docs/demo.graphql`): create → list → start → complete → illegal attempts
+- [x] API coverage ≥ 90% on domain/application
+- [x] Review with the user (also a good moment for a subagent code review + `/code-review`)
 
 ---
 
@@ -240,8 +240,8 @@ the E2E validation case relies on that (`ada@example`).
 **Scope:** M
 
 ### ✅ Checkpoint C — Full stack
-- [ ] The whole demo flow works in the browser and through GraphQL directly
-- [ ] CI: lint, typecheck, unit, integration, E2E all green
+- [x] The whole demo flow works in the browser and through GraphQL directly
+- [x] CI: lint, typecheck, unit, integration, E2E all green
 
 ---
 

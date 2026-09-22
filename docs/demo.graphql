@@ -1,0 +1,178 @@
+# Demo script — paste into Apollo Sandbox (http://localhost:3000/graphql when running `yarn workspace @app/api dev`)
+#
+# Run the operations top to bottom. Copy each `query`/`mutation` block plus its matching
+# "Query variables" JSON into Sandbox separately (Sandbox runs one operation + its variables at a time).
+# Fill in the `id` variables from the previous response as you go (marked ← copy from above).
+
+# 1. Health check ---------------------------------------------------------
+
+query Health {
+  health {
+    status
+    db
+  }
+}
+
+# 2. List employees (pick one id for the "start" step below) --------------
+
+query Employees {
+  employees {
+    id
+    name
+  }
+}
+
+# 3. Create an order — starts in OPEN, no employee ------------------------
+
+mutation CreateOrder {
+  createOrder(
+    input: {
+      customer: { name: "Ada Lovelace", email: "ada@example.com" }
+      lineItems: [
+        { sku: "SKU-1", name: "Mechanical keyboard", quantity: 1, unitPriceCents: 8999 }
+        { sku: "SKU-2", name: "USB-C cable", quantity: 2, unitPriceCents: 1299 }
+      ]
+    }
+  ) {
+    id
+    state
+    customer {
+      name
+      email
+    }
+    lineItems {
+      sku
+      quantity
+      unitPriceCents
+    }
+    createdAt
+    updatedAt
+  }
+}
+
+# 4. List orders, filtered to OPEN — the new order should be in there -----
+
+query ListOpenOrders {
+  orders(filter: { state: OPEN }, first: 10) {
+    nodes {
+      id
+      state
+      customer {
+        name
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+# 5. Order details ----------------------------------------------------------
+# Query variables: { "id": "<order id from step 3>" }
+
+query OrderDetails($id: ID!) {
+  order(id: $id) {
+    id
+    state
+    assignedEmployee {
+      id
+      name
+    }
+    history {
+      from
+      to
+      at
+      employeeId
+    }
+  }
+}
+
+# 6. Illegal: start without an employee → EMPLOYEE_REQUIRED -----------------
+# Query variables: { "orderId": "<order id from step 3>" }
+
+mutation StartWithoutEmployee($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: IN_PROGRESS }) {
+    id
+    state
+  }
+}
+
+# 7. Illegal: skip straight to COMPLETE → INVALID_TRANSITION ----------------
+# Query variables: { "orderId": "<order id from step 3>" }
+
+mutation SkipToComplete($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: COMPLETE }) {
+    id
+    state
+  }
+}
+
+# 8. Start the order (OPEN → IN_PROGRESS) with a valid employee -------------
+# Query variables: { "orderId": "<order id from step 3>", "employeeId": "<employee id from step 2>" }
+
+mutation StartOrder($orderId: ID!, $employeeId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: IN_PROGRESS, employeeId: $employeeId }) {
+    id
+    state
+    assignedEmployee {
+      id
+      name
+    }
+    history {
+      from
+      to
+      at
+      employeeId
+    }
+  }
+}
+
+# 9. Illegal: revert back to OPEN → INVALID_TRANSITION ----------------------
+# Query variables: { "orderId": "<order id from step 3>" }
+
+mutation RevertToOpen($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: OPEN }) {
+    id
+    state
+  }
+}
+
+# 10. Illegal: unknown order id → NOT_FOUND ----------------------------------
+
+mutation UnknownOrder {
+  transitionOrder(input: { orderId: "000000000000000000000000", targetState: IN_PROGRESS }) {
+    id
+    state
+  }
+}
+
+# 11. Complete the order (IN_PROGRESS → COMPLETE) ----------------------------
+# Query variables: { "orderId": "<order id from step 3>" }
+
+mutation CompleteOrder($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: COMPLETE }) {
+    id
+    state
+    assignedEmployee {
+      id
+      name
+    }
+    history {
+      from
+      to
+      at
+      employeeId
+    }
+  }
+}
+
+# 12. Illegal: repeat the same completion → INVALID_TRANSITION ---------------
+# Query variables: { "orderId": "<order id from step 3>" }
+
+mutation RepeatComplete($orderId: ID!) {
+  transitionOrder(input: { orderId: $orderId, targetState: COMPLETE }) {
+    id
+    state
+  }
+}
