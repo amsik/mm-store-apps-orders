@@ -275,14 +275,21 @@ secret `DATABASE_URL`, Cloud Run `orders-api` + `orders-web` (min 0 / max 2, `ig
 an M0 cluster on GCP in the same region, a DB user with a `random_password` and `readWrite` on one DB only, and IP access list `0.0.0.0/0`.
 Outputs: service URLs, WIF provider name, deploy SA email. CI: `terraform fmt -check` + `validate`.
 ADR: Terraform + GCP Cloud Run + cold start.
+→ Outcome: scoped with the user to **write and validate the Terraform, not run `terraform apply`** —
+that needs a real GCP project (billing) and a real Atlas organization, which only the account owner can
+supply (docs/adr/0008). `mongodbatlas_advanced_cluster` (TENANT/GCP/M0) is used instead of the older
+`mongodbatlas_cluster`, since the latter is being phased out. `terraform fmt -check` and `terraform validate`
+(against real provider schemas, downloaded locally and in CI, no backend/credentials needed for either)
+pass; `apply`, the live `gcloud run services list` check, and the Atlas/`mongosh` verification are deferred
+to a follow-up once credentials exist.
 
 **Acceptance criteria:**
-- [ ] `terraform apply` from scratch (after the one-time state bucket) creates everything; a second `plan` shows **no changes**
-- [ ] `terraform fmt -check` and `validate` pass in CI
-- [ ] The DB password never appears in the repo or in CI logs; the Cloud Run API reads it only via Secret Manager
+- [ ] `terraform apply` from scratch (after the one-time state bucket) creates everything; a second `plan` shows **no changes** — deferred, needs real GCP/Atlas credentials
+- [x] `terraform fmt -check` and `validate` pass in CI
+- [ ] The DB password never appears in the repo or in CI logs; the Cloud Run API reads it only via Secret Manager — code does this (`random_password` + `value_source.secret_key_ref`); unverifiable against a real deploy until applied
 
 **Verification:** apply + a clean re-plan; `gcloud run services list`; Atlas UI shows the cluster; `mongosh` connects with the secret value.
-**Dependencies:** T13 · **Files:** `infra/terraform/{versions.tf,gcp.tf,atlas.tf,cloudrun.tf,wif.tf,variables.tf,outputs.tf}`, `infra/README.md`, `.github/workflows/ci.yml`, `docs/adr/00xx`
+**Dependencies:** T13 · **Files:** `infra/terraform/{versions.tf,variables.tf,gcp.tf,iam.tf,atlas.tf,secrets.tf,cloudrun.tf,outputs.tf,terraform.tfvars.example}`, `infra/README.md`, `.github/workflows/ci.yml`, `docs/adr/0008`
 **Scope:** M
 
 ### T15: `ci: deploy to gcp cloud run on merge to main`

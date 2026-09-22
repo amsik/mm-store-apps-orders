@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Atlas credentials are NOT here — see
+# infra/README.md for the MONGODB_ATLAS_PUBLIC_KEY / MONGODB_ATLAS_PRIVATE_KEY env vars instead.
+
+gcp_project_id = "mm-store-apps-orders"
+gcp_region     = "europe-west1"
+
+atlas_org_id = "<your Atlas organization id>"
+atlas_region = "EUROPE_WEST_1"
