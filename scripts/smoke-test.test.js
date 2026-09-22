@@ -7,7 +7,7 @@ function jsonResponse(body, ok = true) {
 }
 
 const healthyOnce = jsonResponse({ data: { health: { status: 'OK', db: 'UP' } } });
-const ordersOnce = jsonResponse({ data: { orders: { edges: [] } } });
+const ordersOnce = jsonResponse({ data: { orders: { nodes: [], pageInfo: { hasNextPage: false } } } });
 
 describe('smokeTest', () => {
   it('resolves once health is UP and the orders query succeeds', async () => {
@@ -20,6 +20,14 @@ describe('smokeTest', () => {
       1,
       'https://api.example/graphql',
       expect.objectContaining({ method: 'POST', body: expect.stringMatching(/health/) }),
+    );
+    // OrderConnection exposes `nodes`, not the Relay `edges { node }` shape — matching
+    // apps/api/schema.gql's `type OrderConnection { nodes: [Order!]! pageInfo: PageInfo! }`
+    // is what this test would have caught before the first real deploy did instead.
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      'https://api.example/graphql',
+      expect.objectContaining({ body: expect.stringMatching(/orders\(first: 1\) \{ nodes \{ id \}/) }),
     );
   });
 
