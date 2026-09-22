@@ -94,6 +94,24 @@ jobs:
       - if: always()
         run: docker compose down -v
 
+  terraform:
+    name: terraform (fmt · validate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: '1.15.2'
+          terraform_wrapper: false
+      - run: terraform fmt -check -recursive
+      # No backend and no cloud credentials here: this only checks the config against the
+      # providers' schemas. `plan`/`apply` need a real GCP project and Atlas org (infra/README.md).
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+
   pr-conventions:
     name: PR title & body
     if: github.event_name == 'pull_request'
